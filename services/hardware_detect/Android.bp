@@ -1,6 +1,10 @@
 cc_binary {
     name: "hardware_detect",
     srcs: ["hardware_detect.cpp"],
+    cflags: select(soong_config_variable("hardware_detect", "mainline_common_ext_suffix"), {
+        any @ flag_val: ["-DMAINLINE_COMMON_EXT_SUFFIX=\"" + flag_val + "\""],
+        default: ["-DMAINLINE_COMMON_EXT_SUFFIX=\"\""],
+    }),
     include_dirs: [
         "external/libdrm/freedreno",
     ],

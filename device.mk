@@ -6,6 +6,7 @@
 DEVICE_PATH := device/mainline/generic
 
 # Inherit from mainline/common
+MAINLINE_COMMON_PREFER_EXT_MODULES := true
 TARGET_CONSOLE_AS_ROOT := true
 TARGET_ENABLE_LOGCAT_TO_SERIAL := true
 TARGET_ENABLE_FBKEYBOARD := true
@@ -19,6 +20,7 @@ TARGET_MESA_DO_NOT_SET_AS_DEFAULT := true
 TARGET_SUPPORTS_SUSPEND := false
 TARGET_USES_TABLET_INPUT_AS_TOUCHSCREEN := true
 include device/mainline/common/optional/options.mk
+LOCAL_MAINLINE_COMMON_EXT_SUFFIX := $(if $(filter true,$(MAINLINE_COMMON_USE_EXT_MODULES)),_ext)
 $(call inherit-product, device/mainline/common/mainline_common.mk)
 
 # APEX
@@ -44,11 +46,11 @@ TARGET_MESA_ENABLE_SOFTWARE_RENDERER := true
 
 # Graphics allocator
 PRODUCT_PACKAGES += \
-    com.android.hardware.graphics.allocator.fb \
+    com.android.hardware.graphics.allocator.fb$(LOCAL_MAINLINE_COMMON_EXT_SUFFIX) \
     com.android.hardware.graphics.allocator.gm
 
 PRODUCT_PACKAGES += \
-    mapper.fb \
+    mapper.fb$(LOCAL_MAINLINE_COMMON_EXT_SUFFIX) \
     mapper.gm
 
 PRODUCT_PACKAGES += \
@@ -61,7 +63,7 @@ $(call soong_config_set,fb_graphics,RELEASE_SM_OPEN_DECLARED_PASSTHROUGH_HAL,$(R
 
 # Graphics composer
 PRODUCT_PACKAGES += \
-    com.android.hardware.graphics.composer.drmfb \
+    com.android.hardware.graphics.composer.drmfb$(LOCAL_MAINLINE_COMMON_EXT_SUFFIX) \
     com.android.hardware.graphics.composer.empty
 
 # Graphics Vulkan
@@ -120,6 +122,7 @@ PRODUCT_PACKAGES += \
     hardware_detect \
     overlay_remounter_override
 
+$(call soong_config_set,hardware_detect,mainline_common_ext_suffix,$(LOCAL_MAINLINE_COMMON_EXT_SUFFIX))
 $(call soong_config_set,mainline_common_libinit,set_properties_from,both)
 
 # Input
