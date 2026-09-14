@@ -8,7 +8,6 @@ Run these:
 
 ```
 repopick -t c2-rgb
-repopick -t lineage-light-disable-backlight
 repopick -t mainline-kernel
 ```
 
@@ -24,16 +23,6 @@ For `lineage-24.0` branch:
 | Change id | Change number | Commit message |
 |---------------|-----------|----------------|
 | `I12cbe2c8b47a0ceccf248b088202fefc74525b3a` | 496520 | `zstd: Android.bp: Add `//vendor:__subpackages__` to visibility` |
-
-You can run `repopick [change number ...]` to pick these patches.
-
-## hardware/interfaces
-
-For `lineage-24.0` branch:
-
-| Change id | Change number | Commit message |
-|---------------|-----------|----------------|
-| `Ife4de11c0b0646ad5577d0d37a4d28bc25de1cfa` | 501200 | `bluetooth/aidl/default: Fix 100% CPU spin while waiting for the HCI interface` |
 
 You can run `repopick [change number ...]` to pick these patches.
 
@@ -58,13 +47,3 @@ You can run `repopick [change number ...]` to pick these patches.
 ## system/memory/libmeminfo
 
 Apply from [here](../.patches/system/memory/libmeminfo).
-
-## vendor/lineage
-
-For `lineage-24.0` branch:
-
-| Change id | Change number | Commit message |
-|---------------|-----------|----------------|
-| `I2b9f0524d89e03779fde5a36516c3e8cc4c40c11` | 501163 | `kernel: Probe libclang before using it for rust bindgen` |
-
-You can run `repopick [change number ...]` to pick these patches.
