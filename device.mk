@@ -7,20 +7,7 @@ DEVICE_PATH := device/mainline/generic
 
 # Inherit from mainline/common
 MAINLINE_COMMON_PREFER_EXT_MODULES := true
-TARGET_CONSOLE_AS_ROOT := true
-TARGET_ENABLE_LOGCAT_TO_SERIAL := true
-TARGET_ENABLE_FBKEYBOARD := true
-TARGET_ENABLE_VIRT_WIFI := true
-TARGET_EXTERNAL_CAMERA_PROVIDER_HAL := default-aidl
-TARGET_GRAPHICS_ALLOCATOR_HAL := minigbm-upstream
-TARGET_GRAPHICS_COMPOSER_HAL := drm_hwcomposer
-TARGET_HEALTH_HAL := custom
-TARGET_HOSTAPD_AND_WPA_SUPPLICANT_FORM := legacy
-TARGET_MESA_DO_NOT_SET_AS_DEFAULT := true
-TARGET_SUPPORTS_SUSPEND := false
-TARGET_USES_TABLET_INPUT_AS_TOUCHSCREEN := true
-include device/mainline/common/optional/options.mk
-LOCAL_MAINLINE_COMMON_EXT_SUFFIX := $(if $(filter true,$(MAINLINE_COMMON_USE_EXT_MODULES)),_ext)
+LOCAL_MAINLINE_COMMON_EXT_SUFFIX := $(if $(wildcard device/mainline/common-ext/optional/options.mk),_ext)
 $(call inherit-product, device/mainline/common/mainline_common.mk)
 
 # APEX
@@ -30,8 +17,19 @@ OVERRIDE_PRODUCT_COMPRESSED_APEX := false
 TARGET_SCREEN_WIDTH := 300
 TARGET_SCREEN_HEIGHT := 300
 
+# Camera
+TARGET_EXTERNAL_CAMERA_PROVIDER_HAL := default-aidl
+
 # Dalvik heap
 $(call inherit-product, frameworks/native/build/tablet-10in-xhdpi-2048-dalvik-heap.mk)
+
+# Debugging
+TARGET_CONSOLE_AS_ROOT := true
+TARGET_ENABLE_LOGCAT_TO_SERIAL := true
+TARGET_ENABLE_FBKEYBOARD := true
+
+# Disable
+TARGET_SUPPORTS_SUSPEND := false
 
 # Display
 PRODUCT_PACKAGES += \
@@ -42,6 +40,7 @@ PRODUCT_PACKAGES += \
     amdgpu.ids
 
 # Graphics (Mesa)
+TARGET_MESA_DO_NOT_SET_AS_DEFAULT := true
 TARGET_MESA_ENABLE_SOFTWARE_RENDERER := true
 
 # Graphics allocator
@@ -57,6 +56,7 @@ PRODUCT_PACKAGES += \
     dri_gbm \
     libgbm_mesa
 
+TARGET_GRAPHICS_ALLOCATOR_HAL := minigbm-upstream
 TARGET_MINIGBM_UPSTREAM_ENABLE_GBM_MESA_DRIVER := true
 
 $(call soong_config_set,fb_graphics,RELEASE_SM_OPEN_DECLARED_PASSTHROUGH_HAL,$(RELEASE_SM_OPEN_DECLARED_PASSTHROUGH_HAL))
@@ -65,6 +65,8 @@ $(call soong_config_set,fb_graphics,RELEASE_SM_OPEN_DECLARED_PASSTHROUGH_HAL,$(R
 PRODUCT_PACKAGES += \
     com.android.hardware.graphics.composer.drmfb$(LOCAL_MAINLINE_COMMON_EXT_SUFFIX) \
     com.android.hardware.graphics.composer.empty
+
+TARGET_GRAPHICS_COMPOSER_HAL := drm_hwcomposer
 
 # Graphics Vulkan
 PRODUCT_PACKAGES += \
@@ -79,6 +81,8 @@ PRODUCT_PACKAGES += \
     android.hardware.health-service.generic \
     android.hardware.health-service.generic_recovery \
     charger_res_images_vendor
+
+TARGET_HEALTH_HAL := custom
 
 # HIDL
 PRODUCT_PACKAGES += \
@@ -128,6 +132,8 @@ $(call soong_config_set,mainline_common_libinit,set_properties_from,both)
 # Input
 PRODUCT_COPY_FILES += \
     $(call find-copy-subdir-files,*.kl,$(DEVICE_PATH)/configs/input/,$(TARGET_COPY_OUT_VENDOR)/usr/keylayout/)
+
+TARGET_USES_TABLET_INPUT_AS_TOUCHSCREEN := true
 
 # Images
 PRODUCT_BUILD_BOOT_IMAGE := false
@@ -196,3 +202,6 @@ $(call inherit-product, packages/modules/Virtualization/apex/product_packages.mk
 # Wi-Fi
 PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/configs/wifi/wpa_supplicant.conf:$(TARGET_COPY_OUT_VENDOR)/etc/wifi/wpa_supplicant.conf
+
+TARGET_ENABLE_VIRT_WIFI := true
+TARGET_HOSTAPD_AND_WPA_SUPPLICANT_FORM := legacy
