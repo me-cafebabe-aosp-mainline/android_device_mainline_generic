@@ -19,7 +19,6 @@ TARGET_GRUB_ARCH := arm64-efi
 # Graphics (Mesa)
 BOARD_MESA3D_GALLIUM_DRIVERS += \
     asahi \
-    ethosu \
     etnaviv \
     freedreno \
     lima \
@@ -28,6 +27,7 @@ BOARD_MESA3D_GALLIUM_DRIVERS += \
     tegra \
     v3d \
     vc4
+#    ethosu
 #    rocket
 
 BOARD_MESA3D_VULKAN_DRIVERS += \
