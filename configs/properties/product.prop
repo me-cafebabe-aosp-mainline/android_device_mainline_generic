@@ -1,2 +1,4 @@
+import /mnt/vendor/generic_init/android/${ro.boot.android_dir:-android}/product.prop
+
 # ADB
 service.adb.tcp.port=5555

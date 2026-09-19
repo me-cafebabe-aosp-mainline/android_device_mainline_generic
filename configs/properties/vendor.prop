@@ -1,3 +1,5 @@
+import /mnt/vendor/generic_init/android/${ro.boot.android_dir:-android}/vendor.prop
+
 # Bluetooth
 # Set the Bluetooth Class of Device
 # Service Field: 0x1A -> 26
