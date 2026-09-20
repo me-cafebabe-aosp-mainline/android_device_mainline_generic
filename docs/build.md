@@ -2,6 +2,10 @@
 
 Before getting started with this, you should have synced the LineageOS source tree from a branch that this repository have.
 
+## Obtaining the build dependencies
+
+Please visit [Build dependencies](build-dependencies.md) page for the build dependencies to be obtained.
+
 ## Setting up the build environment
 
 Enter LineageOS source tree, and then run:
@@ -17,30 +21,6 @@ This device tree currently have the following target devices:
 - `Generic_x86_64`
 
 The chosen target device will be referred as `<device>` in below.
-
-## Cloning this device tree and its dependencies in LineageOS org
-
-Write the following content to `device/mainline/<device>/lineage.dependencies` file:
-
-```json
-[
-  {
-    "repository": "android_device_mainline_generic",
-    "target_path": "device/mainline/generic"
-  }
-]
-```
-
-And then, run the following commands:
-
-```
-lineage/scripts/repopick/repopick.py 496352
-vendor/lineage/build/tools/roomservice.py generic true device/mainline/<device>
-```
-
-## Cloning the dependencies at outside of LineageOS org
-
-Please visit [Build dependencies](build-dependencies.md) page for the dependencies to be cloned.
 
 ## Applying patches
 

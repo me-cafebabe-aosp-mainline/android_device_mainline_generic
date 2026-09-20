@@ -1,8 +1,10 @@
 # Build dependencies
 
-## Repositories inside of LineageOS org
+## Android device tree related repositories
 
-These should be automatically handled by `roomservice.py` program during [Cloning this device tree and its dependencies in LineageOS org](build.md#cloning-this-device-tree-and-its-dependencies-in-lineageos-org).
+1. Clone the corresponding branch of [mainline local_manifests](https://github.com/me-cafebabe-aosp-mainline/local_manifests) to `.repo/local_manifests` path.
+
+2. Sync your source tree again using `repo sync` command.
 
 ## Kernel source related repositories
 

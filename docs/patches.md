@@ -11,11 +11,6 @@ repopick -t c2-rgb
 repopick -t mainline-kernel
 ```
 
-## external/mesa
-
-All the entries [here](https://review.lineageos.org/q/project:LineageOS/android_external_mesa+owner:me.cafebabe@gmail.com+branch:lineage-24.0).
-You can simply check out the repository to the HEAD of the top entry on the chain.
-
 ## external/zstd
 
 For `lineage-24.0` branch:
