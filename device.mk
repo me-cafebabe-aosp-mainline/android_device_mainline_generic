@@ -126,6 +126,7 @@ PRODUCT_PACKAGES += \
     hardware_detect \
     overlay_remounter_override
 
+$(call soong_config_set_bool,generic_init,enabled,true)
 $(call soong_config_set,hardware_detect,mainline_common_ext_suffix,$(LOCAL_MAINLINE_COMMON_EXT_SUFFIX))
 $(call soong_config_set,mainline_common_libinit,set_properties_from,both)
 
