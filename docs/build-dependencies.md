@@ -1,20 +1,27 @@
 # Build dependencies
 
-## Android device tree related repositories
+This page lists the additional repositories required before building.
 
-1. Clone the corresponding branch of [mainline local_manifests](https://github.com/me-cafebabe-aosp-mainline/local_manifests) to `.repo/local_manifests` path.
+## Android device tree repositories
 
-2. Sync your source tree again using `repo sync` command.
+1. Clone the corresponding branch of [mainline
+   local_manifests](https://github.com/me-cafebabe-aosp-mainline/local_manifests)
+   to `.repo/local_manifests`.
 
-## Kernel source related repositories
+2. Sync the source tree again with `repo sync`.
 
-These would likely never get into LineageOS org. You'll need to clone these manually.
+## Kernel source repositories
 
-Here is table of required kernel source repositories for the default configuration of target devices in this device tree:
+These are unlikely to be included in the LineageOS organization and
+must be cloned manually.
+
+The following kernel source repositories are required for the default
+configuration of target devices in this device tree:
 
 | Source | Destination | Branch |
 |--------|-------------|--------|
 | https://salsa.debian.org/kernel-team/linux/ | `external/debian-linux` | `debian/latest` |
 | https://android.googlesource.com/kernel/common | `kernel/mainline/android-mainline` | `android-mainline` |
 
-If you will use a different kernel configuration, then these repositories might not be needed.
+If you will use a different kernel configuration, some of these
+repositories may not be needed.

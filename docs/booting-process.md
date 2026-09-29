@@ -1,141 +1,161 @@
 # Booting process
 
+This document describes the boot sequence from the kernel through the
+mounted Android OS, with emphasis on the role of `generic_init`.
+
 ## Kernel
 
-This is device-dependant.
+This is device-dependent.
 
-Use a kernel that is built from a kernel tree that supports the device,
-with Android configurations (maybe with some Android-specific patches too) included.
+Use a kernel built from a kernel tree that supports the target device,
+with Android configurations (and possibly some Android-specific
+patches) included.
 
-Boot the kernel like how the other working Linux OS does, or use other methods that's supported by the device to boot the kernel.
+Boot the kernel the same way any other working Linux OS does, or use
+another method supported by the device.
 
-Use the kernel cmdline from the output of `get_build_var BOARD_KERNEL_CMDLINE` command
-in the Android source tree after selecting the target device, and maybe with some
-custom specified parameters too.
+The kernel command line comes from the output of
+`get_build_var BOARD_KERNEL_CMDLINE` in the Android source tree after
+selecting the target device, optionally with additional custom
+parameters (see [Boot parameters](boot-parameters.md)).
 
-Use `ramdisk-all-combined.img` from the Android target device output directory as ramdisk.
+Use `ramdisk-all-combined.img` from the Android target device output
+directory as the ramdisk.
 
-Ways to boot the kernel includes but not limited to:
-- Boot loaders (U-Boot, device-specific boot loader, etc)
-- Boot managers (GRUB, rEFInd, syslinux, systemd-boot, etc)
-- Execute the kernel directly in EFI environment (if the kernel have EFI stub support enabled)
+Ways to boot the kernel include but are not limited to:
+
+- Boot loaders (U-Boot, device-specific boot loader, etc.)
+- Boot managers (GRUB, rEFInd, syslinux, systemd-boot, etc.)
+- Direct kernel execution in an EFI environment (if the kernel has
+  EFI stub support enabled)
 
 ## Ramdisk
 
-Ramdisk could be a concatenation of multiple ramdisk images in the same format.
+The ramdisk may be a concatenation of multiple ramdisk images in the
+same format.
 
-Ramdisk contains init program and its configuration, possibly with kernel modules and firmwares too.
+The ramdisk contains the init program and its configuration, and
+possibly kernel modules and firmware files.
 
-Kernel executes the init program in ramdisk specified by `rdinit=` parameter.
-By default it's `/init`, here we have it set to `/system/bin/generic_init`.
+The kernel executes the init program specified by the `rdinit=`
+parameter. By default this is `/init`; here it is set to
+`/system/bin/generic_init`.
 
-Normal Android uses `/init` program which is built from `system/core/init`.
+Standard Android uses `/init`, built from `system/core/init`. This
+device tree uses a fork named `generic_init`, which is more flexible
+and includes additional features. Its source code is at
+`vendor/mainline/services/generic_init`.
 
-Here we have and uses our own fork of it, which is more flexible and have more features included, named `generic_init`.
-
-Its source code is at `services/generic_init` in this repository.
-
-The `generic_init` is basically a merge of AOSP `init_first_stage` and `ueventd`, with some wiring up in between,
-additionally with a mount handler that replaces `first_stage_mount.cpp` that automatically scans partitions
-and generates fstab entries on-the-fly.
+`generic_init` is essentially a merge of AOSP `init_first_stage` and
+`ueventd`, with additional wiring between them and a mount handler
+(replacing `first_stage_mount.cpp`) that automatically scans
+partitions and generates fstab entries on the fly.
 
 ### Basic environment setup in ramdisk
 
-This is done by the init program, and the implementation in `generic_init`
-does not really differ from the implementation in AOSP `/init`.
+This is done by the init program, and the implementation in
+`generic_init` does not differ significantly from AOSP `/init`.
 
 ### Loading basic kernel modules in ramdisk
 
-Kernel modules that are required to probe the boot media, and the kernel modules for basic hardware platform support,
-and the kernel modules required for outputting the logs (i.e. serial device driver or basic display driver),
-should get installed to `/lib/modules` in the ramdisk.
+Kernel modules required to probe the boot media, basic hardware
+platform support, and output devices (serial device drivers or basic
+display drivers) should be installed to `/lib/modules` in the ramdisk.
 
-The `generic_init` will firstly load the modules listed on `modules.load`
-and the modules with prefix listed on `modules.load_prefix` in `/lib/modules`.
+`generic_init` first loads the modules listed in `modules.load` and
+the modules whose names match a prefix listed in `modules.load_prefix`,
+both located in `/lib/modules`.
 
-Then, it will start the `ueventd` component, to listen for uevents from the kernel,
-and load modules depending on the `MODALIAS` field in the uevents.
+It then starts the `ueventd` component to listen for kernel uevents
+and load modules based on the `MODALIAS` field in each uevent.
 
-If the loaded kernel modules requests for firmware, the `ueventd` component will
-try to provide the requested firmware from several directories, specified by the
-ueventd configuration at `/system/etc/ueventd.ramdisk.rc` in ramdisk.
+If a loaded kernel module requests firmware, the `ueventd` component
+provides it from directories specified in the ueventd configuration at
+`/system/etc/ueventd.ramdisk.rc` in the ramdisk.
 
-The `ueventd` component will also inform the mount handler about added block devices,
-then the mount handler will scan the block devices and save the information to memory.
+The `ueventd` component also informs the mount handler about newly
+added block devices. The mount handler scans these block devices and
+caches their information.
 
-Once the mount handler have collected block devices that's enough to mount every required
-Android partitions depending on its parameters, the `ueventd` component will quit,
-and proceed with the next step.
+Once the mount handler has collected enough block devices to mount
+every required Android partition (depending on the chosen boot
+parameters), the `ueventd` component exits and the next step begins.
 
 ### Mounting Android partitions
 
-The mount handler gets called again, and it will do some preparations
-(e.g. mounting base partitions and setting up loop devices), then construct a virtual fstab
-(with the entries on the specified addon fstab included), finally pass the result fstab to
-`MountHelpers::MountPartitions()` which is basically a copy of
-`FirstStageMountVBootV2::MountPartitions()` from AOSP `first_stage_mount.cpp`,
-and let it finally do the rest of mounts.
+The mount handler is invoked again to perform preparations (mounting
+base partitions and setting up loop devices), then constructs a virtual
+fstab (including entries from the specified addon fstab), and passes
+the resulting fstab to `MountHelpers::MountPartitions()`. This
+function is a copy of `FirstStageMountVBootV2::MountPartitions()` from
+AOSP `first_stage_mount.cpp` and performs the remaining mounts.
 
-After mounting completes, the root directory will be switched over to the mounted Android OS.
+After mounting completes, the root directory is switched over to the
+mounted Android OS.
 
 ### Executing custom vendor init program
 
-The `generic_init` will execute `/vendor/bin/vendor_init`.
-
-Preparations such as generating firmwares can be done in that program.
+`generic_init` executes `/vendor/bin/vendor_init`. Preparations such
+as generating firmware files can be done in that program.
 
 ### Loading kernel modules from the mounted partitions
 
-The `generic_init` will firstly load the modules listed on `modules.load`
-and the modules with prefix listed on `modules.load_prefix`, again, but
-in `/vendor/lib/modules` instead of in `/lib/modules` which is in ramdisk.
+`generic_init` again loads modules listed in `modules.load` and
+modules matching a prefix in `modules.load_prefix`, this time from
+`/vendor/lib/modules` instead of the ramdisk's `/lib/modules`.
 
-And the `ueventd` component in `generic_init` starts again, but it uses configuration
-from `/system/etc/ueventd.rc` from the mounted partitions instead.
+The `ueventd` component starts again, but now uses configuration from
+`/system/etc/ueventd.rc` in the mounted partitions instead of the
+ramdisk.
 
-The `/system/etc/ueventd.rc` imports `/vendor/etc/ueventd.rc`, in our case it's copied from
-`device/mainline/common/init/ueventd.rc`, it imports hardware-specific configuration file
-based on properties. However, properties aren't loaded at this moment, so we convert from
-`androidboot.` parameters instead. Refer to the `TranslatePropName()` call in `ExpandProps()`
-on `util.cpp` in `generic_init` for details of how it works.
+`/system/etc/ueventd.rc` imports `/vendor/etc/ueventd.rc`, which in
+this device tree is copied from
+`device/mainline/common/init/ueventd.rc` and imports
+hardware-specific configuration files based on properties. Because
+properties are not yet loaded at this stage, `androidboot.*`
+parameters are used as a substitute. See `TranslatePropName()` in
+`ExpandProps()` in `util.cpp` within `generic_init` for details.
 
-The `ueventd` component in `generic_init` will load modules depending on received uevents once again.
+The `ueventd` component loads modules based on received uevents once
+again.
 
-Additionally, since the partitions are mounted, we have a usermode helper at `/vendor/bin/modprobe_kernel`
-which can handle kernel requesting for modules with exact name. Some non-basic drivers uses that method.
+Additionally, because the partitions are now mounted, a usermode
+helper at `/vendor/bin/modprobe_kernel` can handle kernel requests for
+modules by exact name. Some non-basic drivers use this method.
 
-Firmware requests gets handled as well in the previous way, but searching in
-the directories specified by the newly loaded ueventd configuration instead.
+Firmware requests are handled the same way as before, but searching
+the directories specified by the newly loaded ueventd configuration.
 
-We want to get as many as possible modules loaded as early as possible, because
-there's a service that will execute very early in the mounted Android OS
-does HAL selections depending on the probed hardwares.
+Loading as many modules as possible early is important, because a
+service that runs very early in the mounted Android OS performs HAL
+selection based on probed hardware.
 
-If there is no new uevents to handle in consecutive 5 seconds,
-the `ueventd` component in `generic_init` will quit, and proceed with the next step.
+If no new uevents arrive for a consecutive 5 seconds, the `ueventd`
+component exits and the next step begins.
 
 ### Start the mounted Android OS
 
-The `generic_init` executes `/system/bin/init` same as how AOSP `/init` does.
+`generic_init` executes `/system/bin/init`, the same way AOSP `/init`
+does.
 
 ## The mounted Android OS
 
-Here we only document about the different parts.
+The following sections document only the parts that differ from
+standard Android.
 
 ### The hardware_detect service
 
-We have a service that does hardware related configurations and selects the HALs to be used,
-named `hardware_detect`, with service name `init_dev_config`, located at `/vendor/bin/hardware_detect`.
-
+`hardware_detect` is a service that performs hardware-related
+configuration and selects the HALs to use. Its service name is
+`init_dev_config` and its binary is at `/vendor/bin/hardware_detect`.
 Its source code is at `services/hardware_detect` in this repository.
 
-For details of how it works, please check out the source code.
-
-If this service didn't execute successfully, Android will finally crash due to unselected APEXes.
+If this service does not execute successfully, Android will crash due
+to unselected APEXes.
 
 ### The get_display_ppi service
 
-It calculates PPI (Pixels-Per-Inch) value from the EDID from the first connected connector
-from the DRM card that is selected, and sets the PPI value to LCD density property.
-
-Its source code is at `services/get_display_ppi` in this repository.
+This service calculates the PPI (pixels-per-inch) value from the EDID
+of the first connected connector on the selected DRM card, and sets
+the result to the LCD density property. Its source code is at
+`services/get_display_ppi` in this repository.

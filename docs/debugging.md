@@ -1,16 +1,20 @@
 # Debugging
 
-## Gathering shell access on specified serial console
+This document describes common debugging techniques for this device
+tree.
 
-Specify the serial device on `androidboot.console=` parameter, like the Linux `console=` parameter.
+## Gathering shell access on a specified serial console
 
-## Gathering ADB access via ethernet or VirtIO VSOCK when system services encounters crash loop
+Specify the serial device via the `androidboot.console=` parameter,
+using the same syntax as the Linux `console=` parameter.
+
+## Gaining ADB access via Ethernet or VirtIO VSOCK during a system service crash loop
 
 Boot with the parameter `androidboot.insecure_adb=true`.
 
-If you want to connect via ethernet, get shell access, and run the following commands:
-
-(Assuming the ethernet interface is `eth0`, and IPv4 address to be set is `192.168.1.100/24`)
+If connecting via Ethernet, gain shell access first and run the
+following commands (assuming the Ethernet interface is `eth0` and the
+IPv4 address to assign is `192.168.1.100/24`):
 
 ```
 stop
@@ -19,24 +23,28 @@ ip address add 192.168.1.100/24 dev eth0
 ip rule add from all lookup main
 ```
 
-Finally, connect to it.
+Then connect:
 
-To connect via ethernet: `adb connect <IPv4 address>` (for example: `192.168.1.100`)
+- Via Ethernet: `adb connect <IPv4 address>` (e.g.
+  `adb connect 192.168.1.100`)
+- Via VirtIO VSOCK: `adb connect vsock:<Guest CID>:5555` (the Guest
+  CID is usually visible in the VM configuration)
 
-To connect via VirtIO VSOCK: `adb connect vsock:<Guest CID>:5555` (`<Guest CID>` is usually visible on the VM configuration)
+## Pausing at a shell during early boot
 
-## Pausing at shell during early boot
+See the `androidboot.mode=console` parameter in [Boot
+parameters](boot-parameters.md).
 
-Please check out the `androidboot.mode=console` parameter on [Boot parameters](boot-parameters.md).
+## Printing the kernel log to a serial console
 
-## Printing kernel log to serial console
+Use the standard Linux `console=` parameter.
 
-Just use the standard Linux `console=` parameter.
+## Printing logcat to a serial console
 
-## Printing logcat to serial console
+See the `androidboot.seriallogging` parameters in [Boot
+parameters](boot-parameters.md).
 
-Please check out the `androidboot.seriallogging` parameters on [Boot parameters](boot-parameters.md).
+## Saving early logs to the metadata partition
 
-## Saving early logs to metadata partition
-
-Please check out the `androidboot.save_early_logs` parameter on [Boot parameters](boot-parameters.md).
+See the `androidboot.save_early_logs` parameter in [Boot
+parameters](boot-parameters.md).
