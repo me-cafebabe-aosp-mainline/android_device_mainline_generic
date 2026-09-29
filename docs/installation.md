@@ -129,7 +129,7 @@ Android typically requires at least 1 GiB of space for userdata.
 
 | Method | Steps |
 |--------|-------|
-| Directories | Ensure at least one block device contains a directory listed in `possible_firmware_dirs` in `mount_handler.cpp`. Some of these directories are normally present on a block device that contains a GNU/Linux installation. |
+| Directories | Ensure at least one block device contains a firmware directory. The directories checked on each block device (in order) are: `<android_dir>/firmware`, `usr/lib/firmware`, `lib/firmware`, `linux-firmware`, and `firmware`. Some of these are normally present on a block device that contains a GNU/Linux installation. |
 | Ignore | Ensure that no peripherals require firmware, or that they load their firmware through other means. |
 | Image | Build an image containing the firmware files and place it in the Android directory as `firmware.img` or `linux-firmware.img`. Tips: (1) the image filesystem can be EROFS; (2) if obtaining firmware from the linux-firmware repository, use its `copy-firmware.sh` script. |
 | Only Android directory | Ensure the `firmware` subdirectory exists inside the Android directory and contains the needed firmware files. |

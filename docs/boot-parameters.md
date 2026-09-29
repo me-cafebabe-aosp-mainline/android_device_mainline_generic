@@ -13,17 +13,20 @@ fits into the boot sequence.
 
 ### androidboot.addon_fstab_suffix
 
-Specifies the suffix for the fstab file in the ramdisk to be loaded as
-an addon.
+Specifies one or more suffixes (comma-separated) for addon fstab files
+to be imported. Each suffix maps to a file named
+`fstab.generic_init.addon.<suffix>` loaded from `/system/etc/`.
+Addon fstab entries are appended after all dynamically generated
+entries.
 
 ### androidboot.android_dir
 
-Specifies the name of the directory containing files for booting
-Android.
-
-This directory is checked first in the list of possible Android
-directories. See [Installation](installation.md) for how the Android
-directory is used.
+Specifies the preferred directory name to search for on each block
+device when looking for Android files (images, subdirectories,
+firmware). This name is tried first; the fallbacks are `android` and
+`boot/android`. If multiple block devices contain a matching
+directory, the last one found is used. See
+[Installation](installation.md) for how the Android directory is used.
 
 ### androidboot.board_platform
 
@@ -58,11 +61,11 @@ The following options are supported:
 
 | Value | Description |
 |-------|-------------|
-| `all_possible_dirs` (or `true`) | Search all possible directories containing firmware files, then bind mount the found directory to this mountpoint. The list of possible directories is defined by `possible_firmware_dirs` in `mount_handler.cpp`. |
+| `all_possible_dirs` (or `true`) | Scan all block devices for firmware directories and bind mount the first one found to this mountpoint. On each block device, the directories checked (in order) are: `<android_dir>/firmware`, `usr/lib/firmware`, `lib/firmware`, `linux-firmware`, `firmware`. The last block device with a matching directory wins. |
 | `disable` (or `false`) | Skip mounting this mountpoint entirely. |
 | `img` | Mount from a firmware image inside the Android directory. The image name may be either `firmware.img` or `linux-firmware.img`. |
 | `img_ram` | Like `img`, but the firmware image is first copied to RAM before mounting. |
-| `only_android_dir` | Like `all_possible_dirs`, but only searches inside the Android directory. |
+| `only_android_dir` | Like `all_possible_dirs`, but only checks the `firmware` subdirectory within the Android directory on each block device. |
 
 ### androidboot.mount_system
 

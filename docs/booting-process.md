@@ -47,9 +47,14 @@ and includes additional features. Its source code is at
 `vendor/mainline/services/generic_init`.
 
 `generic_init` is essentially a merge of AOSP `init_first_stage` and
-`ueventd`, with additional wiring between them and a mount handler
-(replacing `first_stage_mount.cpp`) that automatically scans
-partitions and generates fstab entries on the fly.
+`ueventd`, with additional wiring between them and
+`DynamicMountHandler` (in `dynamic_mount_handler.cpp`) that replaces
+AOSP's `first_stage_mount.cpp`. `DynamicMountHandler` automatically
+scans block devices as they appear and generates fstab entries on the
+fly. The actual mounting is performed by `DynamicMountHelpers` (in
+`dynamic_mount_helpers.cpp`), which is derived from AOSP
+`first_stage_mount.cpp` with modifications for overlayfs support and
+system-as-root switching.
 
 ### Basic environment setup in ramdisk
 
@@ -73,25 +78,33 @@ If a loaded kernel module requests firmware, the `ueventd` component
 provides it from directories specified in the ueventd configuration at
 `/system/etc/ueventd.ramdisk.rc` in the ramdisk.
 
-The `ueventd` component also informs the mount handler about newly
-added block devices. The mount handler scans these block devices and
-caches their information.
+The `ueventd` component also notifies `DynamicMountHandler` about
+newly added block devices via `OnBlockDeviceAdd()`. For each block
+device (ignoring `dm-`, `loop`, `ram`, and `zram` prefixed names),
+the handler probes the filesystem by attempting a read-only mount,
+identifies its type and contents (Android system partitions, Android
+directory, firmware directories, images), and caches the result.
+APFS block devices are also supported — each APFS volume is tried in
+sequence.
 
-Once the mount handler has collected enough block devices to mount
-every required Android partition (depending on the chosen boot
-parameters), the `ueventd` component exits and the next step begins.
+Once `DynamicMountHandler::CanQuitUeventd()` determines that enough
+block devices have been found to satisfy all required Android
+partitions (depending on the chosen boot parameters), the `ueventd`
+component exits and the next step begins.
 
 ### Mounting Android partitions
 
-The mount handler is invoked again to perform preparations (mounting
-base partitions and setting up loop devices), then constructs a virtual
-fstab (including entries from the specified addon fstab), and passes
-the resulting fstab to `MountHelpers::MountPartitions()`. This
-function is a copy of `FirstStageMountVBootV2::MountPartitions()` from
-AOSP `first_stage_mount.cpp` and performs the remaining mounts.
+`DynamicMountHandler::OnPostBlockDevices()` is invoked to mount the
+Android partitions. It mounts the block device hosting the Android
+directory (if needed), sets up loop devices for image-based mounts,
+constructs a virtual fstab, appends any addon fstab entries (from
+`androidboot.addon_fstab_suffix`), and passes the result to
+`DynamicMountHelpers::MountPartitions()`. This function handles
+system-as-root switching, overlayfs, and the remaining mounts.
 
-After mounting completes, the root directory is switched over to the
-mounted Android OS.
+After mounting completes, the Android directory mount is released if
+no longer needed (allowing live boot users to eject the boot media),
+and the root directory is switched over to the mounted Android OS.
 
 ### Executing custom vendor init program
 
