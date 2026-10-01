@@ -154,6 +154,11 @@ PRODUCT_COPY_FILES += \
 PRODUCT_PACKAGES += \
     modprobe_kernel
 
+# Media
+PRODUCT_COPY_FILES += \
+    device/google/cuttlefish/shared/config/media_profiles.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_profiles_V1_0.xml \
+    device/google/cuttlefish/shared/config/media_profiles.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_profiles_vendor.xml
+
 # Overlays
 DEVICE_PACKAGE_OVERLAYS += \
     $(DEVICE_PATH)/overlays/overlay
