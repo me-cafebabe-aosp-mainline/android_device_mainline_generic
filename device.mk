@@ -18,7 +18,8 @@ TARGET_SCREEN_WIDTH := 300
 TARGET_SCREEN_HEIGHT := 300
 
 # Camera
-TARGET_EXTERNAL_CAMERA_PROVIDER_HAL := default-aidl
+$(call soong_config_set_bool,camera_hal_mainline,include_all_permission_xmls,true)
+$(call soong_config_set_bool,camera_hal_mainline,run_as_root,true)
 
 # Dalvik heap
 $(call inherit-product, frameworks/native/build/tablet-10in-xhdpi-2048-dalvik-heap.mk)

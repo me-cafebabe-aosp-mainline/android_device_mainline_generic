@@ -11,6 +11,12 @@ import /mnt/vendor/generic_init/android/${ro.boot.android_dir:-android}/vendor.p
 bluetooth.device.class_of_device=26,1,4
 persist.bluetooth.a2dp_aac.vbr_supported=true
 
+# Camera
+vendor.camera.advertise_rgb=true
+vendor.camera.default_internal=true
+vendor.camera.facing_by_resolution=true
+vendor.camera.prefer_rgb=true
+
 # Display
 ro.surface_flinger.enable_frame_rate_override=false
 
