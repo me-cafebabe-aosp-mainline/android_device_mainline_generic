@@ -15,9 +15,14 @@ fits into the boot sequence.
 
 Specifies one or more suffixes (comma-separated) for addon fstab files
 to be imported. Each suffix maps to a file named
-`fstab.generic_init.addon.<suffix>` loaded from `/system/etc/`.
+`fstab.generic_init.addon.<suffix>`, looked up in `/system/etc/` of
+the **ramdisk**. The files are read before any Android partition is
+mounted, so they must be installed into the ramdisk (for example a
+`prebuilt_etc` with `ramdisk: true`); a file that exists only in the
+Android system partition is not found. A missing or invalid file is
+logged and skipped.
 Addon fstab entries are appended after all dynamically generated
-entries.
+entries, and the paths in them refer to the mounted Android system.
 
 ### androidboot.android_dir
 
