@@ -44,7 +44,8 @@ parameter. By default this is `/init`; here it is set to
 Standard Android uses `/init`, built from `system/core/init`. This
 device tree uses a fork named `generic_init`, which is more flexible
 and includes additional features. Its source code is at
-`vendor/mainline/services/generic_init`.
+`vendor/mainline/services/generic_init`, and its internals are
+documented in `vendor/mainline/services/generic_init/docs/`.
 
 `generic_init` is essentially a merge of AOSP `init_first_stage` and
 `ueventd`, with additional wiring between them and

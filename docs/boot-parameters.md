@@ -9,7 +9,8 @@ by the component that consumes them.
 These parameters are consumed by `generic_init`, the custom init
 implementation located at `vendor/mainline/services/generic_init`.
 See [Booting process](booting-process.md) for how `generic_init`
-fits into the boot sequence.
+fits into the boot sequence, and
+`vendor/mainline/services/generic_init/docs/` for how it works inside.
 
 ### androidboot.addon_fstab_suffix
 
