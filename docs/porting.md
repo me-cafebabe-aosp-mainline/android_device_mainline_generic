@@ -3,6 +3,9 @@
 This page describes the general steps for porting Android OS to a new
 target device using this device tree.
 
+If the device needs its own device tree instead, see the bringup guide in
+`device/mainline/common/docs/README.md`.
+
 ## Ensure the device can already boot Linux
 
 If there is an existing Linux port that works for your target device,
