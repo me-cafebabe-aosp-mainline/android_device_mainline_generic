@@ -12,8 +12,9 @@ This page lists the additional repositories required before building.
 
 ## Kernel source repositories
 
-These are unlikely to be included in the LineageOS organization and
-must be cloned manually.
+These are not hosted in the mainline organization and must be cloned
+manually, or synced with `conditional/kernel` of the mainline
+`local_manifests`.
 
 The following kernel source repositories are required for the default
 configuration of target devices in this device tree:
