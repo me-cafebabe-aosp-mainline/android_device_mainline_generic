@@ -55,14 +55,6 @@ BOARD_MESA3D_VULKAN_DRIVERS += \
     nouveau \
     virtio
 
-ifeq ($(shell expr $(MESA_VERSION_MAJOR) \>= 26), 1)
-ifeq ($(shell expr $(MESA_VERSION_MINOR) \>= 2), 1)
-$(warning Currently, in Mesa 26.2, nouveau driver cannot be built. Removing it.)
-BOARD_MESA3D_GALLIUM_DRIVERS := $(filter-out nouveau,$(BOARD_MESA3D_GALLIUM_DRIVERS))
-BOARD_MESA3D_VULKAN_DRIVERS := $(filter-out nouveau,$(BOARD_MESA3D_VULKAN_DRIVERS))
-endif
-endif
-
 # Graphics allocator
 $(call soong_config_set_bool,minigbm_upstream,disable_virgl_native_yuv,true)
 
