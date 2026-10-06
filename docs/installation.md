@@ -1,5 +1,8 @@
 # Installation
 
+On a Debian-based Linux distribution, the [Debian package](deb-package.md)
+does all of this.
+
 ## Before getting started
 
 Before starting the actual installation, understand the components

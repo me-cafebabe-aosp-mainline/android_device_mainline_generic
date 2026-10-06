@@ -1,0 +1,73 @@
+#!/bin/sh
+#
+# SPDX-FileCopyrightText: The LineageOS Project
+# SPDX-License-Identifier: Apache-2.0
+#
+
+set -e
+
+android_dir=@ANDROID_DIR@
+
+ANDROID_USERDATA_MODE=bind_mount_dir
+ANDROID_USERDATA_SIZE=8G
+if [ -f /etc/default/@DEB_PACKAGE@ ]; then
+    . /etc/default/@DEB_PACKAGE@
+fi
+
+# generic_init finds the Android directory only on ext4 or F2FS, directly
+# on a block device.
+check_filesystem() {
+    source=$(findmnt -n -o SOURCE -T "$android_dir" 2>/dev/null) || return 0
+    fstype=$(findmnt -n -o FSTYPE -T "$android_dir")
+    case "$source" in
+    /dev/mapper/*|/dev/dm-*)
+        echo "Warning: $android_dir is on $source." >&2
+        echo "Android can not boot from LVM, LUKS or other device mapper devices." >&2
+        ;;
+    esac
+    case "$fstype" in
+    ext4|f2fs) ;;
+    *)
+        echo "Warning: $android_dir is on $fstype." >&2
+        echo "Android can only boot from ext4 or F2FS." >&2
+        ;;
+    esac
+}
+
+# Android formats zeroed images on the first boot.
+create_image() {
+    image=$android_dir/$1.img
+    [ -e "$image" ] && return 0
+    truncate -s "$2" "$image"
+    chmod 0600 "$image"
+}
+
+create_userdata() {
+    case "$ANDROID_USERDATA_MODE" in
+    bind_mount_dir)
+        for part in userdata metadata; do
+            [ -d "$android_dir/$part" ] || mkdir -m 0771 "$android_dir/$part"
+        done
+        ;;
+    imgs)
+        create_image userdata "$ANDROID_USERDATA_SIZE"
+        create_image metadata 64M
+        ;;
+    esac
+}
+
+update_grub() {
+    if command -v update-grub >/dev/null 2>&1 && [ -e /boot/grub/grub.cfg ]; then
+        update-grub || echo "Warning: update-grub failed, run it again by hand." >&2
+    fi
+}
+
+case "$1" in
+configure)
+    check_filesystem
+    create_userdata
+    update_grub
+    ;;
+esac
+
+exit 0

@@ -1,0 +1,20 @@
+#
+# SPDX-FileCopyrightText: The LineageOS Project
+# SPDX-License-Identifier: Apache-2.0
+#
+# Configuration of @BOOTMGR_ANDROID_DISTRIBUTION_NAME@ (@DEB_PACKAGE@).
+# Run 'dpkg-reconfigure @DEB_PACKAGE@' after changing it.
+#
+
+# Where Android keeps its user data (androidboot.mount_userdata):
+#   bind_mount_dir  directories in @ANDROID_DIR@ (default)
+#   imgs            images in @ANDROID_DIR@, ANDROID_USERDATA_SIZE large
+#   tmpfs           in RAM, lost on every reboot
+#ANDROID_USERDATA_MODE=bind_mount_dir
+#ANDROID_USERDATA_SIZE=8G
+
+# Add the serial console to the kernel command line.
+#ANDROID_SERIAL_CONSOLE=true
+
+# Extra kernel command line, for example androidboot.* boot parameters.
+#ANDROID_CMDLINE_EXTRA=""

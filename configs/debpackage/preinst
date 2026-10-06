@@ -1,0 +1,29 @@
+#!/bin/sh
+#
+# SPDX-FileCopyrightText: The LineageOS Project
+# SPDX-License-Identifier: Apache-2.0
+#
+
+set -e
+
+android_dir=@ANDROID_DIR@
+
+has_userdata() {
+    [ -e "$android_dir/userdata.img" ] || [ -n "$(ls -A "$android_dir/userdata" 2>/dev/null)" ]
+}
+
+# Android can not use user data written by a newer build.
+case "$1" in
+install|upgrade)
+    if [ -n "$2" ] && dpkg --compare-versions "$2" gt "@DEB_VERSION@" &&
+       has_userdata && [ "${ANDROID_ALLOW_DOWNGRADE:-}" != 1 ]; then
+        echo "@DEB_PACKAGE@: refusing to downgrade from $2 to @DEB_VERSION@:" >&2
+        echo "Android can not use user data written by a newer build." >&2
+        echo "Purge the package (this deletes the user data) before installing" >&2
+        echo "the older build, or set ANDROID_ALLOW_DOWNGRADE=1 to install it anyway." >&2
+        exit 1
+    fi
+    ;;
+esac
+
+exit 0

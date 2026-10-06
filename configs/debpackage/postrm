@@ -1,0 +1,25 @@
+#!/bin/sh
+#
+# SPDX-FileCopyrightText: The LineageOS Project
+# SPDX-License-Identifier: Apache-2.0
+#
+
+set -e
+
+android_dir=@ANDROID_DIR@
+
+case "$1" in
+remove)
+    if command -v update-grub >/dev/null 2>&1 && [ -e /boot/grub/grub.cfg ]; then
+        update-grub || echo "Warning: update-grub failed, run it again by hand." >&2
+    fi
+    ;;
+purge)
+    rm -rf "$android_dir/userdata" "$android_dir/metadata" \
+        "$android_dir/userdata.img" "$android_dir/metadata.img"
+    rmdir "$android_dir" 2>/dev/null || true
+    rmdir "${android_dir%/*}" 2>/dev/null || true
+    ;;
+esac
+
+exit 0

@@ -1,0 +1,72 @@
+#!/bin/sh
+#
+# SPDX-FileCopyrightText: The LineageOS Project
+# SPDX-License-Identifier: Apache-2.0
+#
+# Adds @BOOTMGR_ANDROID_DISTRIBUTION_NAME@ to the GRUB menu.
+# Installed by @DEB_PACKAGE@, configured in /etc/default/@DEB_PACKAGE@.
+#
+
+set -e
+
+prefix=/usr
+exec_prefix=/usr
+datarootdir=/usr/share
+. "$datarootdir/grub/grub-mkconfig_lib"
+
+android_dir=@ANDROID_DIR@
+
+ANDROID_USERDATA_MODE=bind_mount_dir
+ANDROID_SERIAL_CONSOLE=false
+ANDROID_CMDLINE_EXTRA=
+if [ -f /etc/default/@DEB_PACKAGE@ ]; then
+    . /etc/default/@DEB_PACKAGE@
+fi
+
+# The package is removed, but not purged.
+[ -f "$android_dir/kernel" ] || exit 0
+
+# generic_init finds the Android directory only on ext4 or F2FS, directly
+# on a block device.
+device=$("$grub_probe" --target=device "$android_dir")
+fs=$("$grub_probe" --target=fs "$android_dir")
+skip() {
+    grub_warn "@DEB_PACKAGE@: Android can not boot from $fs on $device, skipped."
+    exit 0
+}
+case "$device" in
+/dev/mapper/*|/dev/dm-*) skip ;;
+esac
+# GRUB names ext4 "ext2".
+case "$fs" in
+ext2|f2fs) ;;
+*) skip ;;
+esac
+
+# Relative to the root of its filesystem, as GRUB and generic_init see it.
+rel_dir=$(make_system_path_relative_to_its_root "$android_dir")
+
+cmdline="@STRIPPED_BOARD_KERNEL_CMDLINE@ androidboot.android_dir=${rel_dir#/} androidboot.mount_system=imgs"
+if [ "$ANDROID_SERIAL_CONSOLE" = true ]; then
+    cmdline="$cmdline @STRIPPED_BOARD_KERNEL_CMDLINE_SERIAL_CONSOLE@"
+fi
+
+android_entry() {
+    title=$1
+    userdata_mode=$2
+
+    echo "menuentry '$(echo "$title" | grub_quote)' --class android \$menuentry_id_option '@DEB_PACKAGE@-$userdata_mode' {"
+    echo "	set gfxpayload=keep"
+    prepare_grub_to_access_device "$device" | grub_add_tab
+    echo "	echo 'Loading kernel...'"
+    echo "	linux	$rel_dir/kernel $cmdline androidboot.mount_userdata=$userdata_mode $ANDROID_CMDLINE_EXTRA"
+    echo "	echo 'Loading ramdisk...'"
+    echo "	initrd	$rel_dir/ramdisk-all-combined.img"
+    echo "}"
+}
+
+echo "Found @BOOTMGR_ANDROID_DISTRIBUTION_NAME@ in $android_dir" >&2
+android_entry "@BOOTMGR_ANDROID_DISTRIBUTION_NAME@" "$ANDROID_USERDATA_MODE"
+if [ "$ANDROID_USERDATA_MODE" != tmpfs ]; then
+    android_entry "@BOOTMGR_ANDROID_DISTRIBUTION_NAME@ (user data in RAM)" tmpfs
+fi

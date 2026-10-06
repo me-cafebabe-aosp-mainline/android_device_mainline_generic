@@ -1,0 +1,16 @@
+Package: @DEB_PACKAGE@
+Version: @DEB_VERSION@
+Architecture: @DEB_ARCH@
+Maintainer: @DEB_MAINTAINER@
+Installed-Size: @DEB_INSTALLED_SIZE@
+Section: misc
+Priority: optional
+Recommends: grub2-common, firmware-linux-free
+Suggests: firmware-linux-nonfree
+Description: @BOOTMGR_ANDROID_DISTRIBUTION_NAME@ for @TARGET_DEVICE@
+ Installs the Android system next to this Linux distribution, on the
+ same filesystem, and adds it to the GRUB menu. Android keeps its user
+ data in @ANDROID_DIR@.
+ .
+ The filesystem must be ext4 or F2FS, directly on a partition or disk
+ (not on LVM or LUKS).
