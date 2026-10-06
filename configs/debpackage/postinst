@@ -34,12 +34,17 @@ check_filesystem() {
     esac
 }
 
-# Android formats zeroed images on the first boot.
+# Android should format zeroed images on the first boot, but does not
+# yet: format them here.
 create_image() {
     image=$android_dir/$1.img
     [ -e "$image" ] && return 0
     truncate -s "$2" "$image"
     chmod 0600 "$image"
+    if ! mkfs.ext4 -q -b 4096 "$image"; then
+        rm -f "$image"
+        return 1
+    fi
 }
 
 create_userdata() {

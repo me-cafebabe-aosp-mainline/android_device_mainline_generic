@@ -5,6 +5,7 @@ Maintainer: @DEB_MAINTAINER@
 Installed-Size: @DEB_INSTALLED_SIZE@
 Section: misc
 Priority: optional
+Depends: e2fsprogs
 Recommends: grub2-common, firmware-linux-free
 Suggests: firmware-linux-nonfree
 Description: @BOOTMGR_ANDROID_DISTRIBUTION_NAME@ for @TARGET_DEVICE@
