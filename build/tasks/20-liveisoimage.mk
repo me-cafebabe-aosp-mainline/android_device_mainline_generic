@@ -33,6 +33,16 @@ ifneq ($(TARGET_GRUB_ARCH),)
 INSTALLED_LIVEISOIMAGE_TARGET_DEPS += \
 	$(TARGET_GRUB_LIVE_CONFIGS)
 
+# grub-mkrescue adds these platforms to the ISO if their prebuilts exist,
+# which makes the ISO boot on 32-bit UEFI firmware (i386-efi, with a
+# 64-bit kernel in mixed mode) and on legacy BIOS (i386-pc). Depend on
+# them so the build fails instead of silently producing an ISO without them.
+ifeq ($(TARGET_GRUB_ARCH),x86_64-efi)
+INSTALLED_LIVEISOIMAGE_TARGET_DEPS += \
+	prebuilts/bootmgr/grub/$(HOST_PREBUILT_TAG)/i386-efi/lib/grub/i386-efi/kernel.img \
+	prebuilts/bootmgr/grub/$(HOST_PREBUILT_TAG)/i386-pc/lib/grub/i386-pc/boot_hybrid.img
+endif
+
 TARGET_GRUB_HOST_PREBUILT_TAG ?= $(HOST_PREBUILT_TAG)
 TARGET_GRUB_2ND_ARCH_HOST_PREBUILT_TAG ?= $(HOST_PREBUILT_TAG)
 GRUB_PREBUILT_DIR := prebuilts/bootmgr/grub/$(TARGET_GRUB_HOST_PREBUILT_TAG)/$(TARGET_GRUB_ARCH)
