@@ -172,6 +172,11 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     AodDefaultOnOverlay
 
+ifneq ($(LINEAGE_BUILD),)
+DEVICE_PACKAGE_OVERLAYS += \
+    $(DEVICE_PATH)/overlays/overlay-lineage
+endif
+
 # Permissions
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/pc_core_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/pc_core_hardware.xml
