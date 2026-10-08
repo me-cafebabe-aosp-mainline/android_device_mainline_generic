@@ -190,6 +190,8 @@ PRODUCT_COPY_FILES += \
 $(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
 
 # Sensors
+TARGET_SENSORS_HAL_MAINLINE_VIRTUAL_BACKEND := true
+
 $(call soong_config_set_bool,sensors_hal_mainline,include_all_permission_xmls,true)
 $(call soong_config_set_bool,sensors_hal_mainline,run_as_root,true)
 
