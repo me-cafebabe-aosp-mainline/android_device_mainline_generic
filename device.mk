@@ -36,6 +36,11 @@ TARGET_SUPPORTS_SUSPEND := false
 PRODUCT_PACKAGES += \
     get_display_ppi
 
+ifneq ($(wildcard packages/apps/DisplayModes/Android.bp),)
+PRODUCT_PACKAGES += \
+    DisplayModes
+endif
+
 # Graphics
 PRODUCT_PACKAGES += \
     amdgpu.ids
