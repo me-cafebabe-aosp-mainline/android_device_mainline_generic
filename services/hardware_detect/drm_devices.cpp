@@ -43,7 +43,7 @@ const std::set<std::string> kDrmSysfbNames = {
 
 bool IsDrmCardWithConnectorConnected(const DrmDevice& dev) {
     drmModeRes* resources = dev.drm_mode_res;
-    int fd = dev.fd;
+    int fd = dev.fd.get();
     bool result = false;
     const bool was_master = drmIsMaster(fd) == 1;
     const bool can_force_probe = was_master || drmSetMaster(fd) == 0;
@@ -87,8 +87,11 @@ std::tuple<int, uint32_t, std::string> DrmNodeSortKey(const fs::directory_entry&
 
 void CleanupDrmDevice(DrmDevice& dev) {
     if (dev.drm_device) drmFreeDevice(&dev.drm_device);
-    if (dev.drm_mode_res) drmModeFreeResources(dev.drm_mode_res);
-    if (dev.fd >= 0) close(dev.fd);
+    if (dev.drm_mode_res) {
+        drmModeFreeResources(dev.drm_mode_res);
+        dev.drm_mode_res = nullptr;
+    }
+    dev.fd.reset();
 }
 
 std::pair<std::optional<DrmDevice>, std::optional<DrmDevice>> GetDrmCardRenderDevicePair(void) {
@@ -118,33 +121,33 @@ std::pair<std::optional<DrmDevice>, std::optional<DrmDevice>> GetDrmCardRenderDe
         dev.is_render = StartsWith(std::string(entry.path().filename()), "renderD");
         dev.path = entry.path();
 
-        dev.fd = open(dev.path.c_str(), dev.is_render ? O_RDONLY : O_RDWR);
-        if (dev.fd < 0) {
+        dev.fd.reset(open(dev.path.c_str(), dev.is_render ? O_RDONLY : O_RDWR));
+        if (!dev.fd.ok()) {
             LOG(ERROR) << "Unable to open DRM device " << dev.path;
             continue;
         }
 
-        drmVersionPtr version = drmGetVersion(dev.fd);
+        drmVersionPtr version = drmGetVersion(dev.fd.get());
         if (!version) {
             LOG(ERROR) << "Failed to get DRM version for " << dev.path;
-            close(dev.fd);
+            CleanupDrmDevice(dev);
             continue;
         }
         dev.name = std::string(version->name, version->name_len);
         LOG(INFO) << "DRM device " << dev.path << " is " << dev.name;
         drmFreeVersion(version);
 
-        if (drmGetDevice(dev.fd, &dev.drm_device)) {
+        if (drmGetDevice(dev.fd.get(), &dev.drm_device)) {
             LOG(ERROR) << "Failed to get DRM device information for " << dev.path;
-            close(dev.fd);
+            CleanupDrmDevice(dev);
             continue;
         }
 
         if (!dev.is_render) {
-            dev.drm_mode_res = drmModeGetResources(dev.fd);
+            dev.drm_mode_res = drmModeGetResources(dev.fd.get());
             if (!dev.drm_mode_res) {
                 LOG(ERROR) << "Failed to get DRM mode resources for " << dev.path;
-                close(dev.fd);
+                CleanupDrmDevice(dev);
                 continue;
             }
 
@@ -157,9 +160,9 @@ std::pair<std::optional<DrmDevice>, std::optional<DrmDevice>> GetDrmCardRenderDe
                 dev.is_sysfb = true;
             }
 
-            all_cards.push_back(dev);
+            all_cards.push_back(std::move(dev));
         } else {
-            all_renders.push_back(dev);
+            all_renders.push_back(std::move(dev));
         }
     }
 
@@ -253,7 +256,7 @@ out:
         fs::rename(render.path, render.path + "_orig");
         fs::create_symlink("/dev/null", render.path);
     }
-    return {result_card, result_render};
+    return {std::move(result_card), std::move(result_render)};
 }
 
 }  // namespace hardware_detect

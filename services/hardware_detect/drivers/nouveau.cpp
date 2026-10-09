@@ -39,7 +39,7 @@ void DrmNouveauRender(Selections& selections, const DrmDevice& render) {
     NouveauGetparam get_param = {
             .param = kNouveauGetparamChipsetId,
     };
-    if (drmCommandWriteRead(render.fd, kDrmNouveauGetparam, &get_param, sizeof(get_param))) {
+    if (drmCommandWriteRead(render.fd.get(), kDrmNouveauGetparam, &get_param, sizeof(get_param))) {
         LOG(ERROR) << "Failed to get nouveau chipset ID";
         selections.gles_version = kGlesVersion31;
         return;

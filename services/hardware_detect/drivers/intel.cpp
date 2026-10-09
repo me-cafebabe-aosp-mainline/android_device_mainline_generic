@@ -100,11 +100,11 @@ void DrmI915(Selections& selections, int fd, bool is_render) {
 }  // namespace
 
 void DrmI915Card(Selections& selections, const DrmDevice& card, const std::optional<DrmDevice>&) {
-    DrmI915(selections, card.fd, false);
+    DrmI915(selections, card.fd.get(), false);
 }
 
 void DrmI915Render(Selections& selections, const DrmDevice& render) {
-    DrmI915(selections, render.fd, true);
+    DrmI915(selections, render.fd.get(), true);
 }
 
 // The Xe driver supports only Tiger Lake and newer

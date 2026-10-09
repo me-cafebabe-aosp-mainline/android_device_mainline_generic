@@ -36,7 +36,7 @@ constexpr char kMinigbmDeviceProp[] = "vendor.minigbm.device";
 constexpr char kUsbControllerProp[] = "sys.usb.controller";
 
 bool IsDrmMultiplePlanesSupported(const DrmDevice& card) {
-    drmModePlaneRes* planeRes = drmModeGetPlaneResources(card.fd);
+    drmModePlaneRes* planeRes = drmModeGetPlaneResources(card.fd.get());
     if (!planeRes) {
         LOG(ERROR) << "Failed to get plane resources";
         return false;
@@ -51,7 +51,7 @@ bool IsDrmMultiplePlanesSupported(const DrmDevice& card) {
         int planeCountForCrtc = 0;
 
         for (uint32_t i = 0; i < planeRes->count_planes; ++i) {
-            drmModePlane* plane = drmModeGetPlane(card.fd, planeRes->planes[i]);
+            drmModePlane* plane = drmModeGetPlane(card.fd.get(), planeRes->planes[i]);
             if (!plane) continue;
 
             if (plane->possible_crtcs & (1 << crtc_idx)) {
@@ -95,7 +95,7 @@ void SetDefaultsForDrmDisplay(Selections& selections, const DrmDevice& card,
      * drm_hwcomposer-upstream for full-fledged support
      * (however we have some hacks in there too)
      */
-    if (!drmSetClientCap(card.fd, DRM_CLIENT_CAP_ATOMIC, 1)) {
+    if (!drmSetClientCap(card.fd.get(), DRM_CLIENT_CAP_ATOMIC, 1)) {
         selections.hwc_apex = HwcApex::Drm;
         if (!IsDrmMultiplePlanesSupported(card)) {
             SetProperty("ro.vendor.hwc.drm.disable_planes", "1");

@@ -9,6 +9,8 @@
 #include <string>
 #include <utility>
 
+#include <android-base/unique_fd.h>
+
 #include <xf86drm.h>
 #include <xf86drmMode.h>
 
@@ -16,17 +18,17 @@ namespace hardware_detect {
 
 struct DrmDevice {
     std::string path;
-    bool is_render;
-    int fd;
+    bool is_render = false;
+    android::base::unique_fd fd;
     std::string name;
 
-    drmDevicePtr drm_device;
+    drmDevicePtr drm_device = nullptr;
 
     // card specific
-    bool have_connector_connected;
-    bool is_sysfb;
+    bool have_connector_connected = false;
+    bool is_sysfb = false;
     std::string card_have_render_path;
-    drmModeRes* drm_mode_res;
+    drmModeRes* drm_mode_res = nullptr;
 };
 
 // Select the DRM card and its render. The other DRM nodes are hidden by

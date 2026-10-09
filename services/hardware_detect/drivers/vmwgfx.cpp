@@ -40,7 +40,7 @@ bool GetVmwgfxParam(int fd, uint32_t param, uint64_t* value) {
 void DrmVmwgfxRender(Selections& selections, const DrmDevice& render) {
     uint64_t has_3d = 0, has_dx = 0, has_gl43 = 0;
 
-    if (!GetVmwgfxParam(render.fd, DRM_VMW_PARAM_3D, &has_3d)) {
+    if (!GetVmwgfxParam(render.fd.get(), DRM_VMW_PARAM_3D, &has_3d)) {
         LOG(ERROR) << "Failed to get 3D parameter from vmwgfx";
     }
     if (!has_3d) {
@@ -50,8 +50,8 @@ void DrmVmwgfxRender(Selections& selections, const DrmDevice& render) {
     }
 
     // These fail on old kernels, and they are all unsupported there
-    GetVmwgfxParam(render.fd, DRM_VMW_PARAM_DX, &has_dx);
-    GetVmwgfxParam(render.fd, DRM_VMW_PARAM_GL43, &has_gl43);
+    GetVmwgfxParam(render.fd.get(), DRM_VMW_PARAM_DX, &has_dx);
+    GetVmwgfxParam(render.fd.get(), DRM_VMW_PARAM_GL43, &has_gl43);
     LOG(INFO) << "vmwgfx 3D, DX = " << has_dx << " GL43 = " << has_gl43;
 
     if (has_gl43) {

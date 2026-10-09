@@ -55,11 +55,11 @@ void DrmVirtiogpu(Selections& selections, int fd, bool is_render, const std::str
 
 void DrmVirtiogpuCard(Selections& selections, const DrmDevice& card,
                       const std::optional<DrmDevice>& render) {
-    DrmVirtiogpu(selections, card.fd, false, render.has_value() ? render.value().name : "");
+    DrmVirtiogpu(selections, card.fd.get(), false, render.has_value() ? render.value().name : "");
 }
 
 void DrmVirtiogpuRender(Selections& selections, const DrmDevice& render) {
-    DrmVirtiogpu(selections, render.fd, true, render.name);
+    DrmVirtiogpu(selections, render.fd.get(), true, render.name);
 }
 
 }  // namespace hardware_detect

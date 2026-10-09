@@ -79,7 +79,7 @@ MsmGpu GetMsmGpu(int fd) {
 }  // namespace
 
 void DrmMsmCard(Selections&, const DrmDevice& card, const std::optional<DrmDevice>&) {
-    const MsmGpu gpu = GetMsmGpu(card.fd);
+    const MsmGpu gpu = GetMsmGpu(card.fd.get());
     if (!gpu.series) return;
 
     // device/mainline/qcom-common/services/msm_drm_quirks begin
@@ -100,7 +100,7 @@ void DrmMsmCard(Selections&, const DrmDevice& card, const std::optional<DrmDevic
 }
 
 void DrmMsmRender(Selections& selections, const DrmDevice& render) {
-    const MsmGpu gpu = GetMsmGpu(render.fd);
+    const MsmGpu gpu = GetMsmGpu(render.fd.get());
     if (!gpu.series) return;
 
     // Per Mesa freedreno (essl_feature_level)
