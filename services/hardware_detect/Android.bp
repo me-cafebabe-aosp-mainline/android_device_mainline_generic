@@ -14,14 +14,10 @@ cc_binary {
         "hardware_detect.cpp",
         "selections.cpp",
     ],
-    include_dirs: [
-        "external/libdrm/freedreno",
-    ],
     shared_libs: [
         "libbase",
         "libcutils",
         "libdrm",
-        "libdrm_freedreno",
         "liblog",
     ],
     bootstrap: true,

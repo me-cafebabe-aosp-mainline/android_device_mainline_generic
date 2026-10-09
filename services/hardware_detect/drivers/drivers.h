@@ -45,6 +45,7 @@ void DrmXeRender(Selections& selections, const DrmDevice& render);
 // msm.cpp
 void DrmMsmCard(Selections& selections, const DrmDevice& card,
                 const std::optional<DrmDevice>& render);
+void DrmMsmRender(Selections& selections, const DrmDevice& render);
 
 // nouveau.cpp
 void DrmNouveauRender(Selections& selections, const DrmDevice& render);

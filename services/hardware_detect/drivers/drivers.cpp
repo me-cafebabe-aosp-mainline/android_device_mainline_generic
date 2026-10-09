@@ -39,16 +39,11 @@ const std::unordered_map<std::string, DrmCardHandler> kDrmCardHandlers = {
 };
 
 const std::unordered_map<std::string, DrmRenderHandler> kDrmRenderHandlers = {
-        {"amdgpu", DrmAmdgpuRender},
-        {"apple", DrmAsahiRender},
-        {"asahi", DrmAsahiRender},
-        {"i915", DrmI915Render},
-        {"msm", nullptr},
-        {"nouveau", DrmNouveauRender},
-        {"radeon", DrmRadeonRender},
-        {"virtio_gpu", DrmVirtiogpuRender},
-        {"vmwgfx", DrmVmwgfxRender},
-        {"xe", DrmXeRender},
+        {"amdgpu", DrmAmdgpuRender}, {"apple", DrmAsahiRender},
+        {"asahi", DrmAsahiRender},   {"i915", DrmI915Render},
+        {"msm", DrmMsmRender},       {"nouveau", DrmNouveauRender},
+        {"radeon", DrmRadeonRender}, {"virtio_gpu", DrmVirtiogpuRender},
+        {"vmwgfx", DrmVmwgfxRender}, {"xe", DrmXeRender},
 };
 
 }  // namespace
