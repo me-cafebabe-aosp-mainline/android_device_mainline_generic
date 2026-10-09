@@ -174,7 +174,7 @@ enum class GrallocApex : int {
 
 const std::unordered_map<GrallocApex, std::string> kGrallocApexMap = {
         {GrallocApex::Minigbm, "com.android.hardware.graphics.allocator.minigbm_upstream"},
-        {GrallocApex::Fb, "com.android.hardware.graphics.allocator.fb" MAINLINE_COMMON_EXT_SUFFIX},
+        {GrallocApex::Fb, "com.android.hardware.graphics.allocator.fb"},
         {GrallocApex::GbmMesa, "com.android.hardware.graphics.allocator.gm"},
 };
 
@@ -187,7 +187,7 @@ enum class HwcApex : int {
 
 const std::unordered_map<HwcApex, std::string> kHwcApexMap = {
         {HwcApex::Drm, "com.android.hardware.graphics.composer.drm_hwcomposer_upstream"},
-        {HwcApex::DrmFb, "com.android.hardware.graphics.composer.drmfb" MAINLINE_COMMON_EXT_SUFFIX},
+        {HwcApex::DrmFb, "com.android.hardware.graphics.composer.drmfb"},
         {HwcApex::Empty, "com.android.hardware.graphics.composer.empty"},
 };
 

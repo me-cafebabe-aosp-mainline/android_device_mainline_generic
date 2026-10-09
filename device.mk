@@ -6,8 +6,6 @@
 DEVICE_PATH := device/mainline/generic
 
 # Inherit from mainline/common
-MAINLINE_COMMON_PREFER_EXT_MODULES := true
-LOCAL_MAINLINE_COMMON_EXT_SUFFIX := $(if $(wildcard device/mainline/common-ext/optional/options.mk),_ext)
 $(call inherit-product, device/mainline/common/mainline_common.mk)
 
 # APEX
@@ -51,11 +49,11 @@ TARGET_MESA_ENABLE_SOFTWARE_RENDERER := true
 
 # Graphics allocator
 PRODUCT_PACKAGES += \
-    com.android.hardware.graphics.allocator.fb$(LOCAL_MAINLINE_COMMON_EXT_SUFFIX) \
+    com.android.hardware.graphics.allocator.fb \
     com.android.hardware.graphics.allocator.gm
 
 PRODUCT_PACKAGES += \
-    mapper.fb$(LOCAL_MAINLINE_COMMON_EXT_SUFFIX) \
+    mapper.fb \
     mapper.gm
 
 PRODUCT_PACKAGES += \
@@ -69,7 +67,7 @@ $(call soong_config_set,fb_graphics,RELEASE_SM_OPEN_DECLARED_PASSTHROUGH_HAL,$(R
 
 # Graphics composer
 PRODUCT_PACKAGES += \
-    com.android.hardware.graphics.composer.drmfb$(LOCAL_MAINLINE_COMMON_EXT_SUFFIX) \
+    com.android.hardware.graphics.composer.drmfb \
     com.android.hardware.graphics.composer.empty
 
 TARGET_GRAPHICS_COMPOSER_HAL := drm_hwcomposer
@@ -133,7 +131,6 @@ PRODUCT_PACKAGES += \
     overlay_remounter_override
 
 $(call soong_config_set_bool,generic_init,enabled,true)
-$(call soong_config_set,hardware_detect,mainline_common_ext_suffix,$(LOCAL_MAINLINE_COMMON_EXT_SUFFIX))
 $(call soong_config_set,mainline_common_libinit,set_properties_from,both)
 
 # Input
