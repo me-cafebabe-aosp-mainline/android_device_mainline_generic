@@ -35,6 +35,7 @@ const std::unordered_map<std::string, DrmCardHandler> kDrmCardHandlers = {
         {"radeon", nullptr},
         {"virtio_gpu", DrmVirtiogpuCard},
         {"vmwgfx", nullptr},
+        {"xe", nullptr},
 };
 
 const std::unordered_map<std::string, DrmRenderHandler> kDrmRenderHandlers = {
@@ -47,6 +48,7 @@ const std::unordered_map<std::string, DrmRenderHandler> kDrmRenderHandlers = {
         {"radeon", DrmRadeonRender},
         {"virtio_gpu", DrmVirtiogpuRender},
         {"vmwgfx", DrmVmwgfxRender},
+        {"xe", DrmXeRender},
 };
 
 }  // namespace

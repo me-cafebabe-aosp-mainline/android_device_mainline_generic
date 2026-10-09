@@ -40,6 +40,7 @@ void DrmAsahiRender(Selections& selections, const DrmDevice& render);
 void DrmI915Card(Selections& selections, const DrmDevice& card,
                  const std::optional<DrmDevice>& render);
 void DrmI915Render(Selections& selections, const DrmDevice& render);
+void DrmXeRender(Selections& selections, const DrmDevice& render);
 
 // msm.cpp
 void DrmMsmCard(Selections& selections, const DrmDevice& card,
