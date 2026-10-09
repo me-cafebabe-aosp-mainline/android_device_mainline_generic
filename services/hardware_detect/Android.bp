@@ -1,6 +1,19 @@
 cc_binary {
     name: "hardware_detect",
-    srcs: ["hardware_detect.cpp"],
+    srcs: [
+        "drivers/amd.cpp",
+        "drivers/asahi.cpp",
+        "drivers/drivers.cpp",
+        "drivers/generic.cpp",
+        "drivers/intel.cpp",
+        "drivers/msm.cpp",
+        "drivers/nouveau.cpp",
+        "drivers/virtio_gpu.cpp",
+        "drivers/vmwgfx.cpp",
+        "drm_devices.cpp",
+        "hardware_detect.cpp",
+        "selections.cpp",
+    ],
     include_dirs: [
         "external/libdrm/freedreno",
     ],
