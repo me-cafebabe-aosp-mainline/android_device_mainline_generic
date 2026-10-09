@@ -83,6 +83,41 @@ std::tuple<int, uint32_t, std::string> DrmNodeSortKey(const fs::directory_entry&
     return {is_render ? 1 : 0, index, name};
 }
 
+// Returns the path of the selected card, and the path of its render if
+// it has one
+std::pair<std::string, std::string> SelectDrmCardPaths(const std::vector<DrmDevice>& all_cards) {
+    for (const auto& card : all_cards) {
+        if (card.is_sysfb) continue;
+        if (!card.have_connector_connected) continue;
+        if (card.card_have_render_path.empty()) continue;
+        LOG(INFO) << "Select DRM devices using strategy 1";
+        return {card.path, card.card_have_render_path};
+    }
+    for (const auto& card : all_cards) {
+        if (card.is_sysfb) continue;
+        if (!card.have_connector_connected) continue;
+        LOG(INFO) << "Select DRM devices using strategy 2";
+        return {card.path, ""};
+    }
+    for (const auto& card : all_cards) {
+        if (card.is_sysfb) continue;
+        LOG(INFO) << "Select DRM devices using strategy 3";
+        return {card.path, ""};
+    }
+    LOG(INFO) << "Select DRM devices using fallback strategy";
+    return {all_cards.begin()->path, ""};
+}
+
+// Replace the DRM node with a symlink to /dev/null, so that nobody would
+// use it. The original node is kept with an "_orig" suffix.
+void HideDrmNode(const std::string& path) {
+    std::error_code ec;
+    fs::rename(path, path + "_orig", ec);
+    if (ec) LOG(ERROR) << "Failed to rename " << path << ": " << ec.message();
+    fs::create_symlink("/dev/null", path, ec);
+    if (ec) LOG(ERROR) << "Failed to hide " << path << ": " << ec.message();
+}
+
 }  // namespace
 
 void CleanupDrmDevice(DrmDevice& dev) {
@@ -97,12 +132,23 @@ void CleanupDrmDevice(DrmDevice& dev) {
 std::pair<std::optional<DrmDevice>, std::optional<DrmDevice>> GetDrmCardRenderDevicePair(void) {
     std::vector<fs::directory_entry> all_entries;
     constexpr char kDriDir[] = "/dev/dri";
-    if (!std::filesystem::is_directory(kDriDir)) {
+    std::error_code ec;
+    if (!fs::is_directory(kDriDir, ec)) {
         LOG(ERROR) << kDriDir << " does not exist";
         return {};
     }
-    for (const auto& entry : fs::directory_iterator(kDriDir)) {
-        if (!entry.is_other()) continue;
+    fs::directory_iterator dri_it(kDriDir, ec);
+    if (ec) {
+        LOG(ERROR) << "Failed to list " << kDriDir << ": " << ec.message();
+        return {};
+    }
+    for (; dri_it != fs::directory_iterator(); dri_it.increment(ec)) {
+        if (ec) {
+            LOG(ERROR) << "Failed to list " << kDriDir << ": " << ec.message();
+            break;
+        }
+        const auto& entry = *dri_it;
+        if (!entry.is_other(ec)) continue;
         std::string name = entry.path().filename();
         if (StartsWith(name, "card") || StartsWith(name, "renderD")) {
             all_entries.push_back(entry);
@@ -184,34 +230,8 @@ std::pair<std::optional<DrmDevice>, std::optional<DrmDevice>> GetDrmCardRenderDe
         }
     }
 
-    std::string result_card_path, result_render_path;
+    auto [result_card_path, result_render_path] = SelectDrmCardPaths(all_cards);
 
-    for (const auto& card : all_cards) {
-        if (card.is_sysfb) continue;
-        if (!card.have_connector_connected) continue;
-        if (card.card_have_render_path.empty()) continue;
-        LOG(INFO) << "Select DRM devices using strategy 1";
-        result_card_path = card.path;
-        result_render_path = card.card_have_render_path;
-        goto out;
-    }
-    for (const auto& card : all_cards) {
-        if (card.is_sysfb) continue;
-        if (!card.have_connector_connected) continue;
-        LOG(INFO) << "Select DRM devices using strategy 2";
-        result_card_path = card.path;
-        goto out;
-    }
-    for (const auto& card : all_cards) {
-        if (card.is_sysfb) continue;
-        LOG(INFO) << "Select DRM devices using strategy 3";
-        result_card_path = card.path;
-        goto out;
-    }
-    LOG(INFO) << "Select DRM devices using fallback strategy";
-    result_card_path = all_cards.begin()->path;
-
-out:
     auto user_preferred_card_name = GetProperty(kBootPreferDrmCardNameProp, "");
     if (!user_preferred_card_name.empty()) {
         for (const auto& card : all_cards) {
@@ -244,8 +264,7 @@ out:
             continue;
         }
         CleanupDrmDevice(card);
-        fs::rename(card.path, card.path + "_orig");
-        fs::create_symlink("/dev/null", card.path);
+        HideDrmNode(card.path);
     }
     for (auto& render : all_renders) {
         if (render.path == result_render_path) {
@@ -253,8 +272,7 @@ out:
             continue;
         }
         CleanupDrmDevice(render);
-        fs::rename(render.path, render.path + "_orig");
-        fs::create_symlink("/dev/null", render.path);
+        HideDrmNode(render.path);
     }
     return {std::move(result_card), std::move(result_render)};
 }
