@@ -1,7 +1,13 @@
 # Installation
 
+The system installer does all of this from a running system, the live
+ISO for example: launcher icon on live boots, Settings > System otherwise.
+See `packages/apps/MainlineGenericSystemInstaller/README.md`. The
+`diskimage` build target gives the same layout as an image to write to a
+disk.
+
 On a Debian-based Linux distribution, the [Debian package](deb-package.md)
-does all of this.
+does all of this too.
 
 ## Before getting started
 

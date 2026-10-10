@@ -144,6 +144,9 @@ PRODUCT_COPY_FILES += \
 
 TARGET_USES_TABLET_INPUT_AS_TOUCHSCREEN := true
 
+# Installer
+$(call inherit-product, packages/apps/MainlineGenericSystemInstaller/installer.mk)
+
 # Images
 PRODUCT_BUILD_BOOT_IMAGE := false
 PRODUCT_BUILD_RAMDISK_IMAGE := true

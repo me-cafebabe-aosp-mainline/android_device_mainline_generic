@@ -12,6 +12,10 @@
     "target_path": "kernel/mainline/configs"
   },
   {
+    "repository": "android_packages_apps_MainlineGenericSystemInstaller",
+    "target_path": "packages/apps/MainlineGenericSystemInstaller"
+  },
+  {
     "repository": "android_prebuilts_bootmgr",
     "target_path": "prebuilts/bootmgr"
   }
