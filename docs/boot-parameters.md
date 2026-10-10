@@ -178,6 +178,11 @@ See [Debugging](debugging.md) for usage.
 
 ## Others
 
+### androidboot.live
+
+Set to `1` by the live ISO. The system installer then shows its launcher
+icon.
+
 ### androidboot.mode
 
 When set to `console`, spawns a shell on the console device. Once the
