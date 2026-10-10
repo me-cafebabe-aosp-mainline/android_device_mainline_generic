@@ -11,6 +11,13 @@ prebuilt_etc {
 }
 
 prebuilt_etc {
+    name: "device_generic_bootsplash.rc",
+    src: "device_generic_bootsplash.rc",
+    sub_dir: "init",
+    product_specific: true,
+}
+
+prebuilt_etc {
     name: "device_generic_logging.rc",
     src: "device_generic_logging.rc",
     sub_dir: "overlay-system_ext-etc-init",

@@ -34,6 +34,10 @@ TARGET_SUPPORTS_SUSPEND := false
 PRODUCT_PACKAGES += \
     get_display_ppi
 
+TARGET_ENABLE_BOOTSPLASH := true
+
+$(call soong_config_set_bool,bootsplash,use_minimal_init_rc,true)
+
 ifneq ($(wildcard packages/apps/DisplayModes/Android.bp),)
 PRODUCT_PACKAGES += \
     DisplayModes
@@ -116,6 +120,7 @@ PRODUCT_PACKAGES += \
 
 PRODUCT_PACKAGES += \
     console_override.rc \
+    device_generic_bootsplash.rc \
     device_generic_logging.rc \
     device_generic_settings.rc \
     device_generic_settings.sh \
