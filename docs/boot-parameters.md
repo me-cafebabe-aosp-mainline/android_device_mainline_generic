@@ -99,6 +99,10 @@ The following options are supported:
 | `bind_mount_dir` | Bind mount directories named after Android userdata partitions in the Android directory to the corresponding mount points. |
 | `tmpfs` | Use a `tmpfs` mount for userdata mount points, storing the content in RAM (non-persistent across reboots). |
 
+Userdata images are EXT4 or F2FS. Their filesystem block size must be
+4096 bytes, the sector size of the loop devices: `mkfs.ext4` uses 1024
+bytes for small filesystems unless given `-b 4096`.
+
 ## hardware_detect
 
 These parameters are consumed by `hardware_detect`, the hardware
