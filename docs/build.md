@@ -20,6 +20,7 @@ source build/envsetup.sh
 
 This device tree currently has the following target devices:
 
+- `Generic_arm`
 - `Generic_arm64`
 - `Generic_x86_64`
 
