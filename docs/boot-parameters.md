@@ -73,6 +73,29 @@ The following options are supported:
 | `img_ram` | Like `img`, but the firmware image is first copied to RAM before mounting. |
 | `only_android_dir` | Like `all_possible_dirs`, but only checks the `firmware` subdirectory within the Android directory on each block device. |
 
+### androidboot.mount_overlay
+
+Specifies where to find read-only overlays of the Android system
+partitions, which replace, add or remove files of the partitions without
+changing them. Every overlay is optional.
+
+The following options are supported:
+
+| Value | Description |
+|-------|-------------|
+| `disable` (default) | No overlays. |
+| `std_parts` | Block devices whose `PARTNAME` uevent field (typically the GPT partition name) is `<partition>_overlay`, for example `vendor_overlay`. Waits 5 seconds more for them, as they may not exist. |
+| `imgs` | `<partition>_overlay.img` images (EXT4, EROFS or SquashFS) in the Android directory. |
+| `imgs_ram` | Like `imgs`, but the images are first copied to RAM before mounting. |
+| `dirs` | `<partition>_overlay` directories in the Android directory. Not on FAT32, which overlayfs refuses. Removing files needs a filesystem with extended attributes (EXT4, F2FS). |
+
+It works with every `androidboot.mount_system` value. The root of an
+overlay is laid over the mount point of the partition: `/system/bin/foo`
+is `bin/foo` in `system_overlay`. The directories of an overlay give
+their mode and owner to the ones below: its root must be `0755`, owned
+by `root`, like the root of the partition. See `DYNAMIC_MOUNT.md` of
+`generic_init` for the details and limits.
+
 ### androidboot.mount_system
 
 Specifies how to mount the Android system partitions.
