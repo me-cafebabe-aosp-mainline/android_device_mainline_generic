@@ -9,9 +9,12 @@ on early-init && property:ro.boot.bootsplash=1
 on init
     setprop sys.bootsplash.percent 10
     setprop sys.bootsplash.text "Starting up - init"
+on console
+    stop bootsplash
 on late-init
     setprop sys.bootsplash.percent 15
     setprop sys.bootsplash.text "Starting up - late-init"
+    start bootsplash
 on early-fs
     setprop sys.bootsplash.percent 20
     setprop sys.bootsplash.text "Starting up - early-fs"
