@@ -47,6 +47,10 @@ esac
 rel_dir=$(make_system_path_relative_to_its_root "$android_dir")
 
 cmdline="@STRIPPED_BOARD_KERNEL_CMDLINE@ androidboot.android_dir=${rel_dir#/} androidboot.mount_system=imgs"
+# Only this filesystem, not another installation or media with the same
+# directory name
+uuid=$("$grub_probe" --target=fs_uuid "$android_dir" 2>/dev/null) || uuid=
+[ -n "$uuid" ] && cmdline="$cmdline androidboot.android_dir_dev=UUID=$uuid"
 if [ "$ANDROID_SERIAL_CONSOLE" = true ]; then
     cmdline="$cmdline @STRIPPED_BOARD_KERNEL_CMDLINE_SERIAL_CONSOLE@"
 fi

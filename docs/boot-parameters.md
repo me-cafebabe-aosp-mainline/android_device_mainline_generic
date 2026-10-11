@@ -27,12 +27,27 @@ entries, and the paths in them refer to the mounted Android system.
 
 ### androidboot.android_dir
 
-Specifies the preferred directory name to search for on each block
-device when looking for Android files (images, subdirectories,
-firmware). This name is tried first; the fallbacks are `android` and
-`boot/android`. If multiple block devices contain a matching
+Specifies the name of the directory to search for on each block device
+when looking for Android files (images, subdirectories, firmware). When
+it is set, only this name is used; otherwise `android` and
+`boot/android` are. If multiple block devices contain a matching
 directory, the last one found is used. See
 [Installation](installation.md) for how the Android directory is used.
+
+### androidboot.android_dir_dev
+
+Like `root=` of Linux distributions: the only block device where the
+Android directory is looked for. Other devices are still used for
+everything else (partitions, firmware).
+
+| Value | Device |
+|-------|--------|
+| `UUID=<uuid>` | The filesystem with this UUID, as `blkid` and GRUB's `search --fs-uuid` show it (EXT4, F2FS, EROFS, FAT `XXXX-XXXX`, NTFS 16 hex digits) |
+| `PARTUUID=<uuid>` | The partition with this unique GUID (GPT) or ID (MBR) |
+| `PARTLABEL=<name>` | The partition with this GPT name |
+
+Installations made by the system installer and the `.deb` package set it
+with `UUID=`.
 
 ### androidboot.board_platform
 
