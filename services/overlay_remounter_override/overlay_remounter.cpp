@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <errno.h>
 #include <sys/mount.h>
 #include <unistd.h>
 
@@ -31,6 +32,14 @@ static bool umount_retry(const std::string& mount_point) {
         umounted = umount(mount_point.c_str()) == 0;
         if (umounted) {
             break;
+        }
+        // An overlay on /system holds the linker and the libraries of this program, which is
+        // not static like AOSP's (it is in /vendor, where the static libc is not available).
+        // Detach it: they go away with it when init is executed.
+        if (errno == EBUSY) {
+            PLOG(INFO) << "umount: " << mount_point << ", detaching it";
+            umounted = umount2(mount_point.c_str(), MNT_DETACH) == 0;
+            if (umounted) break;
         }
         PLOG(ERROR) << "umount FAILED: " << mount_point;
         if (retry_count) sleep(1);
