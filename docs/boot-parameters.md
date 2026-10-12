@@ -82,7 +82,7 @@ The following options are supported:
 
 | Value | Description |
 |-------|-------------|
-| `all_possible_dirs` (or `true`) | Scan all block devices for firmware directories and bind mount the first one found to this mountpoint. On each block device, the directories checked (in order) are: `<android_dir>/firmware`, `usr/lib/firmware`, `lib/firmware`, `linux-firmware`, `firmware`. The last block device with a matching directory wins. |
+| `all_possible_dirs` (or `true`) | Scan all block devices for firmware directories and bind mount one to this mountpoint. On each block device, the directories checked (in order) are: `<android_dir>/firmware`, `usr/lib/firmware`, `lib/firmware`, `linux-firmware`, `firmware`. The block device of the Android directory wins if it has one, so that an installation beside Linux uses the firmware of that Linux system. Otherwise the last block device with a matching directory wins. |
 | `disable` (or `false`) | Skip mounting this mountpoint entirely. |
 | `img` | Mount from a firmware image inside the Android directory. The image name may be either `firmware.img` or `linux-firmware.img`. |
 | `img_ram` | Like `img`, but the firmware image is first copied to RAM before mounting. |
@@ -99,7 +99,7 @@ The following options are supported:
 | Value | Description |
 |-------|-------------|
 | `disable` (default) | No overlays. |
-| `std_parts` | Block devices whose `PARTNAME` uevent field (typically the GPT partition name) is `<partition>_overlay`, for example `vendor_overlay`. Waits 5 seconds more for them, as they may not exist. |
+| `std_parts` | Block devices whose `PARTNAME` uevent field (typically the GPT partition name) is `<partition>_overlay`, for example `vendor_overlay`. Waits 5 seconds more for them, as they may not exist. Only from the disk of the Android directory, if there is one. |
 | `imgs` | `<partition>_overlay.img` images (EXT4, EROFS or SquashFS) in the Android directory. |
 | `imgs_ram` | Like `imgs`, but the images are first copied to RAM before mounting. |
 | `dirs` | `<partition>_overlay` directories in the Android directory. Not on FAT32, which overlayfs refuses. Removing files needs a filesystem with extended attributes (EXT4, F2FS). |
@@ -119,7 +119,7 @@ The following options are supported:
 
 | Value | Description |
 |-------|-------------|
-| `std_parts` | Map the `PARTNAME` uevent field (typically the GPT partition name) of block devices to Android system partitions. |
+| `std_parts` | Map the `PARTNAME` uevent field (typically the GPT partition name) of block devices to Android system partitions. With several disks, partitions on the disk of the Android directory win. |
 | `blk_devices` | Automatically determine which Android system partition each block device corresponds to, by inspecting the `build.prop` file inside it. |
 | `imgs` | Map Android system images in the Android directory to Android system partitions based on their file name. |
 | `imgs_ram` | Like `imgs`, but the images are first copied to RAM before mounting. |
@@ -132,7 +132,7 @@ The following options are supported:
 
 | Value | Description |
 |-------|-------------|
-| `std_parts` | Map the `PARTNAME` uevent field (typically the GPT partition name) of block devices to Android userdata partitions. |
+| `std_parts` | Map the `PARTNAME` uevent field (typically the GPT partition name) of block devices to Android userdata partitions. With several disks, partitions on the disk of the Android directory win. |
 | `imgs` | Map Android userdata images in the Android directory to Android userdata partitions based on their file name. |
 | `bind_mount_dir` | Bind mount directories named after Android userdata partitions in the Android directory to the corresponding mount points. |
 | `tmpfs` | Use a `tmpfs` mount for userdata mount points, storing the content in RAM (non-persistent across reboots). |
