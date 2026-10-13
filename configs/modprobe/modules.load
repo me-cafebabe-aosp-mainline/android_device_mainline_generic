@@ -1,5 +1,6 @@
 industrialio-configfs.ko
 tun.ko
 uinput.ko
+vhost_vsock.ko
 virt_wifi.ko
 zram.ko
