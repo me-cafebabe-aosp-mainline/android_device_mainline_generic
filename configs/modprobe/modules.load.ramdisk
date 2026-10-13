@@ -1,5 +1,6 @@
 apfs.ko
 erofs.ko
+exfat.ko
 ext4.ko
 f2fs.ko
 fat.ko
@@ -7,6 +8,7 @@ isofs.ko
 loop.ko
 msdos.ko
 ntfs3.ko
+ntfs.ko
 overlay.ko
 squashfs.ko
 udf.ko
