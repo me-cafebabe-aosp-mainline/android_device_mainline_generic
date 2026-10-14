@@ -14,3 +14,16 @@ prebuilt_bin {
     src: "device_generic_settings.sh",
     vendor: true,
 }
+
+prebuilt_bin {
+    name: "first_stage.sh",
+    src: "first_stage.sh",
+    relative_install_path: "bootstrap",
+    vendor: true,
+}
+
+prebuilt_bin {
+    name: "qrbugreport",
+    src: "qrbugreport",
+    vendor: true,
+}

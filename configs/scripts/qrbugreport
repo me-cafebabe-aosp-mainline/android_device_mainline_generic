@@ -1,0 +1,20 @@
+#!/vendor/bin/bootstrap/sh
+
+function collect() {
+echo '- date -'
+date
+echo '- firmware errors -'
+dmesg|grep -i 'firmware'|grep -v 'Handle uevent'|grep -E 'error|fail|not'|cut -b 16-|cut -d ':' -f 1|sort|uniq
+echo '- hardware_detect -'
+dmesg|grep -F 'hardware_detect: '|cut -d ':' -f 2-|sed 's|com.android.hardware.||g;s|org.lineageos.device.||g;s|/dev/dri/||g'|grep -vE 'blur|ApplySelections|USB'
+echo '- mount -'
+cat /proc/mounts|grep -E ' /(cache|data|metadata|odm|product|system_ext|vendor)? '|cut -d ',' -f 1|sed 's|/dev/block/||g'
+echo '- prop -'
+grep -F 'ro.vendor.build.date=' /vendor/build.prop
+echo '- uname -'
+uname -r
+}
+
+echo '##### Bug report QR code #####'
+#[ "$(mount|grep ' /sys/kernel/debug ')" ] || mount -t debugfs none /sys/kernel/debug
+collect 2>/dev/null | /vendor/bin/qrencode -m 2 -t ANSIUTF8 2>/dev/null

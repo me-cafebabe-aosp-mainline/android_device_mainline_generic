@@ -133,6 +133,7 @@ PRODUCT_PACKAGES += \
     device_generic_logging.rc \
     device_generic_settings.rc \
     device_generic_settings.sh \
+    first_stage.sh \
     init-chowns.sh \
     init_dev_config_override.rc
 
@@ -225,6 +226,10 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     sh_vendor_bootstrap \
     toybox_vendor_bootstrap
+
+PRODUCT_PACKAGES += \
+    qrbugreport \
+    qrencode.vendor
 
 # VINTF
 TARGET_FOLLOWS_LATEST_VINTF_TARGET_LEVEL := true
