@@ -43,10 +43,14 @@ PRODUCT_PACKAGES += \
     DisplayModes
 endif
 
-# Filesystem
+# First stage init
 PRODUCT_PACKAGES += \
     e2fsck.vendor_ramdisk \
-    fsck.f2fs.vendor_ramdisk
+    fsck.f2fs.vendor_ramdisk \
+    linker.vendor_ramdisk \
+    resize2fs.vendor_ramdisk \
+    shell_and_utilities_vendor_ramdisk \
+    tune2fs.vendor_ramdisk
 
 # Graphics
 PRODUCT_PACKAGES += \
