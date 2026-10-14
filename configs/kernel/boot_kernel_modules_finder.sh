@@ -84,9 +84,11 @@ drivers/video/fbdev/core"
 MODULES+="
 apfs
 erofs
+exfat
 fat
 isofs
 msdos
+ntfs
 ntfs3
 overlay
 squashfs
