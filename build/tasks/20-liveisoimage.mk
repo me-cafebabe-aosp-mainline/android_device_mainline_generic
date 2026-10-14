@@ -52,6 +52,8 @@ GRUB_WORKDIR_BASE := $(TARGET_OUT_INTERMEDIATES)/GRUB_OBJ
 GRUB_WORKDIR_LIVE := $(GRUB_WORKDIR_BASE)/live
 
 # $(1): output file
+# -publisher: Ventoy then boots the ISO as it is, without changing its initrd, and
+# generic_init finds the ISO through Ventoy's ACPI table
 define make-liveisoimage-target
 	rm -rf $(GRUB_WORKDIR_LIVE)
 	mkdir -p $(GRUB_WORKDIR_LIVE)/fsroot/$(BOOTMGR_ANDROID_DIR_NAME) $(GRUB_WORKDIR_LIVE)/fsroot/boot/grub
@@ -65,6 +67,7 @@ define make-liveisoimage-target
 		-d $(GRUB_PREBUILT_DIR)/lib/grub/$(TARGET_GRUB_ARCH) \
 		-o $(1) \
 		--xorriso=$(BOOTMGR_XORRISO_EXEC) \
+		-publisher "VENTOY COMPATIBLE" \
 		$(GRUB_WORKDIR_LIVE)/fsroot \
 		$(if $(TARGET_LINUX_FIRMWARE_IMAGE),\
 			/$(BOOTMGR_ANDROID_DIR_NAME)/firmware.img=$(TARGET_LINUX_FIRMWARE_IMAGE)) \
