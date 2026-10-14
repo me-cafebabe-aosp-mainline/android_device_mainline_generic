@@ -11,6 +11,9 @@ include device/mainline/common/BoardConfigMainlineCommon.mk
 # A/B
 AB_OTA_UPDATER := false
 
+# Boot image
+BOARD_BOOT_HEADER_VERSION := 4
+
 # Boot manager
 TARGET_BOOT_MANAGER := grub
 TARGET_GRUB_LIVE_CONFIGS := $(DEVICE_PATH)/configs/bootmgr/live/grub.cfg

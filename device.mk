@@ -43,6 +43,11 @@ PRODUCT_PACKAGES += \
     DisplayModes
 endif
 
+# Filesystem
+PRODUCT_PACKAGES += \
+    e2fsck.vendor_ramdisk \
+    fsck.f2fs.vendor_ramdisk
+
 # Graphics
 PRODUCT_PACKAGES += \
     amdgpu.ids
