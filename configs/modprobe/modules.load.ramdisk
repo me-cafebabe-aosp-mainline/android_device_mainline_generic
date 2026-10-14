@@ -1,4 +1,5 @@
 apfs.ko
+efivarfs.ko
 erofs.ko
 exfat.ko
 ext4.ko

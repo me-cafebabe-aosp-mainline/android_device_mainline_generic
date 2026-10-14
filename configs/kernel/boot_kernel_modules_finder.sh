@@ -83,6 +83,7 @@ drivers/video/fbdev/core"
 # Filesystems
 MODULES+="
 apfs
+efivarfs
 erofs
 exfat
 fat

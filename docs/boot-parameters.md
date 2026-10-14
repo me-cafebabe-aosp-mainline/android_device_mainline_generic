@@ -49,6 +49,19 @@ everything else (partitions, firmware).
 Installations made by the system installer and the `.deb` package set it
 with `UUID=`.
 
+### androidboot.android_iso_uuid
+
+The UUID of the ISO image holding the Android directory, as GRUB and
+`blkid` show it (`YYYY-MM-DD-HH-mm-ss-hh`). When the ISO is booted as a
+file of a partition (Ventoy, GRUB `loopback`), generic_init looks for an
+`*.iso` file with that UUID on the partitions without an Android
+directory, and attaches it as a device. The live ISO's GRUB sets it when
+booted from an ISO9660 filesystem.
+
+Ventoy must boot the live ISO in its "compatible" mode, which the ISO
+asks for. Under UEFI, Ventoy also tells which file it booted, and no
+search is needed.
+
 ### androidboot.board_platform
 
 When `generic_init` parses `.rc` files, it must expand property
