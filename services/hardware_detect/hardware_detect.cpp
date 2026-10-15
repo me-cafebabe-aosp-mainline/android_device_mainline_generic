@@ -32,6 +32,7 @@ constexpr char kGraphicsRenderNameProp[] = "ro.vendor.graphics.render.name";
 constexpr char kHwcDrmDeviceProp[] = "vendor.hwc.drm.device";
 constexpr char kGrallocDeviceProp[] = "vendor.gralloc.device";
 constexpr char kMinigbmDeviceProp[] = "vendor.minigbm.device";
+constexpr char kMesaDrmRenderNodeProp[] = "vendor.mesa.drm.render.node";
 
 constexpr char kUsbControllerProp[] = "sys.usb.controller";
 
@@ -169,6 +170,11 @@ void DetectGraphics(Selections& selections) {
     // Render
     if (drm_render.has_value()) {
         DetectDrmRender(selections, drm_render.value(), drm_card.value());
+
+        // Mesa uses only this device, so that it does not pick another GPU
+        if (selections.hw_egl == HwEgl::Mesa) {
+            SetProperty(kMesaDrmRenderNodeProp, drm_render.value().path);
+        }
     }
 
     CleanupDrmDevice(drm_card.value());

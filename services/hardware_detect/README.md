@@ -56,10 +56,10 @@ Set:
 Vulkan APEXes, `ro.vendor.graphics.card.name`,
 `ro.vendor.graphics.render.name`, `vendor.hwc.drm.device`,
 `vendor.gralloc.device`, `vendor.minigbm.device`,
-`vendor.minigbm.generic_backend`, `vendor.sys.usb.adb.disabled`,
-`ro.surface_flinger.supports_background_blur`, and the quirk properties
-set by the drivers (`ro.vendor.hwc.drm.*`, `vendor.minigbm.*`,
-`vendor.mesa.*`).
+`vendor.mesa.drm.render.node`, `vendor.minigbm.generic_backend`,
+`vendor.sys.usb.adb.disabled`, `ro.surface_flinger.supports_background_blur`,
+and the quirk properties set by the drivers (`ro.vendor.hwc.drm.*`,
+`vendor.minigbm.*`, `vendor.mesa.*`).
 
 ## Driver notes
 
