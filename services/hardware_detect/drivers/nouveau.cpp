@@ -33,25 +33,40 @@ constexpr uint32_t kNouveauChipsetNve0 = 0xe0;  // Kepler, minimum of NVK
 
 }  // namespace
 
-void DrmNouveauRender(Selections& selections, const DrmDevice& render, const DrmDevice&) {
-    selections.gralloc_apex = GrallocApex::GbmMesa;
+namespace {
 
+bool GetNouveauChipset(int fd, uint32_t* chipset) {
     NouveauGetparam get_param = {
             .param = kNouveauGetparamChipsetId,
     };
-    if (drmCommandWriteRead(render.fd.get(), kDrmNouveauGetparam, &get_param, sizeof(get_param))) {
+    if (drmCommandWriteRead(fd, kDrmNouveauGetparam, &get_param, sizeof(get_param))) {
         LOG(ERROR) << "Failed to get nouveau chipset ID";
+        return false;
+    }
+    *chipset = static_cast<uint32_t>(get_param.value);
+    return true;
+}
+
+}  // namespace
+
+// Mesa has no driver for NV04 ~ NV20
+bool DrmNouveauRenderUsable(const DrmDevice& render) {
+    uint32_t chipset;
+    return !GetNouveauChipset(render.fd.get(), &chipset) || chipset >= kNouveauChipsetNv30;
+}
+
+void DrmNouveauRender(Selections& selections, const DrmDevice& render, const DrmDevice&) {
+    selections.gralloc_apex = GrallocApex::GbmMesa;
+
+    uint32_t chipset;
+    if (!GetNouveauChipset(render.fd.get(), &chipset)) {
         selections.gles_version = kGlesVersion31;
         return;
     }
 
-    const uint32_t chipset = static_cast<uint32_t>(get_param.value);
     LOG(INFO) << "Nouveau chipset ID is 0x" << std::hex << chipset;
 
-    if (chipset < kNouveauChipsetNv30) {
-        // Mesa has no driver for NV04 ~ NV20
-        selections.UseSwiftshaderGraphics();
-    } else if (chipset < kNouveauChipsetNv50) {
+    if (chipset < kNouveauChipsetNv50) {
         // nv30 (GL 2.1)
         selections.gles_version = kGlesVersion20;
     } else if (chipset < kNouveauChipsetNvc0) {

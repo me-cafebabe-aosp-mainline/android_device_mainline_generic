@@ -31,8 +31,11 @@ registered are treated as unknown.
 3. Defaults for DRM display are set: minigbm gralloc, DRM HWC when atomic
    modesetting is available, and Mesa. `ro.boot.graphics=swiftshader`
    switches to Swiftshader instead.
-4. The driver handlers refine the selection, mostly according to the GPU
-   generation and what Mesa supports on it (OpenGL ES version, Vulkan
+4. A render that cannot do hardware rendering (`virtio_gpu` and `vmwgfx`
+   without 3D, Intel Gen 2, `nouveau` before NV30) is checked by its
+   driver, and selects Swiftshader. Its card still displays.
+   Then the driver handlers refine the selection, mostly according to the
+   GPU generation and what Mesa supports on it (OpenGL ES version, Vulkan
    driver, gralloc, and quirks).
 5. The boot overrides are processed and the properties are set.
 

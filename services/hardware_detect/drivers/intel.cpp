@@ -36,10 +36,7 @@ int GetIntelGen(int device_id) {
 
 // Render side settings, according to what Mesa supports on each generation
 void SetupIntelRender(Selections& selections, int gen) {
-    if (gen <= kIntelGen2) {
-        // No hardware driver in Mesa
-        selections.UseSwiftshaderGraphics();
-    } else if (gen <= kIntelGen5) {
+    if (gen <= kIntelGen5) {
         // i915 (Gen 3) / crocus (Gen 4~5): GLES 2.0
         selections.gles_version = kGlesVersion20;
     } else if (gen == kIntelGen6) {
@@ -73,15 +70,23 @@ void SetupIntelCard(int device_id, int gen) {
     }
 }
 
-void DrmI915(Selections& selections, int fd, bool is_render) {
-    int value = 0;
+bool GetI915ChipsetId(int fd, int* value) {
     drm_i915_getparam_t get_param = {
             .param = I915_PARAM_CHIPSET_ID,
-            .value = &value,
+            .value = value,
     };
 
     if (drmIoctl(fd, DRM_IOCTL_I915_GETPARAM, &get_param)) {
         LOG(ERROR) << "Failed to get I915_PARAM_CHIPSET_ID";
+        return false;
+    }
+    return true;
+}
+
+void DrmI915(Selections& selections, int fd, bool is_render) {
+    int value = 0;
+
+    if (!GetI915ChipsetId(fd, &value)) {
         if (is_render) SetupIntelRender(selections, kIntelGen9);
         return;
     }
@@ -98,6 +103,12 @@ void DrmI915(Selections& selections, int fd, bool is_render) {
 }
 
 }  // namespace
+
+// Gen 2 has no hardware driver in Mesa
+bool DrmI915RenderUsable(const DrmDevice& render) {
+    int value = 0;
+    return !GetI915ChipsetId(render.fd.get(), &value) || GetIntelGen(value) > kIntelGen2;
+}
 
 void DrmI915Card(Selections& selections, const DrmDevice& card, const std::optional<DrmDevice>&) {
     DrmI915(selections, card.fd.get(), false);

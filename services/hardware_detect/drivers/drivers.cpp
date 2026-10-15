@@ -46,7 +46,20 @@ const std::unordered_map<std::string, DrmRenderHandler> kDrmRenderHandlers = {
         {"vmwgfx", DrmVmwgfxRender}, {"xe", DrmXeRender},
 };
 
+// Renders that can be software only. The others are always usable.
+const std::unordered_map<std::string, DrmRenderUsableCheck> kDrmRenderUsableChecks = {
+        {"i915", DrmI915RenderUsable},
+        {"nouveau", DrmNouveauRenderUsable},
+        {"virtio_gpu", DrmVirtiogpuRenderUsable},
+        {"vmwgfx", DrmVmwgfxRenderUsable},
+};
+
 }  // namespace
+
+bool IsDrmRenderUsable(const DrmDevice& render) {
+    auto it = kDrmRenderUsableChecks.find(render.name);
+    return it == kDrmRenderUsableChecks.end() || it->second(render);
+}
 
 void DetectDrmCard(Selections& selections, const DrmDevice& card,
                    const std::optional<DrmDevice>& render) {
@@ -66,6 +79,12 @@ void DetectDrmCard(Selections& selections, const DrmDevice& card,
 void DetectDrmRender(Selections& selections, const DrmDevice& render, const DrmDevice& card) {
     if (selections.uses_sw_rendered_graphics) {
         // Nothing to do
+        return;
+    }
+
+    if (!IsDrmRenderUsable(render)) {
+        LOG(WARNING) << "DRM render " << render.path << " cannot do hardware rendering";
+        selections.UseSwiftshaderGraphics();
         return;
     }
 
