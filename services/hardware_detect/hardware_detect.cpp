@@ -33,6 +33,7 @@ constexpr char kHwcDrmDeviceProp[] = "vendor.hwc.drm.device";
 constexpr char kGrallocDeviceProp[] = "vendor.gralloc.device";
 constexpr char kMinigbmDeviceProp[] = "vendor.minigbm.device";
 constexpr char kMesaDrmRenderNodeProp[] = "vendor.mesa.drm.render.node";
+constexpr char kMesaNoKmsSwrastProp[] = "vendor.mesa.android.no.kms.swrast";
 constexpr char kGrallocScanoutLinearProp[] = "vendor.gralloc.scanout_linear";
 constexpr char kMinigbmScanoutLinearProp[] = "vendor.minigbm.scanout_linear";
 
@@ -184,6 +185,12 @@ void DetectGraphics(Selections& selections) {
         if (selections.hw_egl == HwEgl::Mesa) {
             SetProperty(kMesaDrmRenderNodeProp, drm_render.value().path);
         }
+    }
+
+    // The software rendering of Mesa must not open the DRM card. The first client to
+    // open it becomes the DRM master, and then the HWC cannot control the display.
+    if (selections.hw_egl == HwEgl::Mesa && selections.uses_sw_rendered_graphics) {
+        SetProperty(kMesaNoKmsSwrastProp, "true");
     }
 
     CleanupDrmDevice(drm_card.value());
