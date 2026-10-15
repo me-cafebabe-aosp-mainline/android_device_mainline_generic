@@ -108,6 +108,36 @@ std::pair<std::string, std::string> SelectDrmCardPaths(const std::vector<DrmDevi
     return {all_cards.begin()->path, ""};
 }
 
+// Apply the boot overrides to the selection of SelectDrmCardPaths()
+std::pair<std::string, std::string> SelectDrmPaths(const DrmDevices& devices) {
+    auto [result_card_path, result_render_path] = SelectDrmCardPaths(devices.cards);
+
+    auto user_preferred_card_name = GetProperty(kBootPreferDrmCardNameProp, "");
+    if (!user_preferred_card_name.empty()) {
+        for (const auto& card : devices.cards) {
+            if (card.name != user_preferred_card_name) continue;
+            LOG(INFO) << "Override DRM card selection from " << result_card_path;
+            result_card_path = card.path;
+            if (!card.card_have_render_path.empty()) {
+                LOG(INFO) << "Override DRM render selection from " << result_render_path;
+                result_render_path = card.card_have_render_path;
+            }
+            break;
+        }
+    }
+    auto user_preferred_render_name = GetProperty(kBootPreferDrmRenderNameProp, "");
+    if (!user_preferred_render_name.empty()) {
+        for (const auto& render : devices.renders) {
+            if (render.name != user_preferred_render_name) continue;
+            LOG(INFO) << "Override DRM render selection from " << result_render_path;
+            result_render_path = render.path;
+            break;
+        }
+    }
+
+    return {result_card_path, result_render_path};
+}
+
 // Replace the DRM node with a symlink to /dev/null, so that nobody would
 // use it. The original node is kept with an "_orig" suffix.
 void HideDrmNode(const std::string& path) {
@@ -129,7 +159,7 @@ void CleanupDrmDevice(DrmDevice& dev) {
     dev.fd.reset();
 }
 
-std::pair<std::optional<DrmDevice>, std::optional<DrmDevice>> GetDrmCardRenderDevicePair(void) {
+DrmDevices EnumerateDrmDevices() {
     std::vector<fs::directory_entry> all_entries;
     constexpr char kDriDir[] = "/dev/dri";
     std::error_code ec;
@@ -212,11 +242,6 @@ std::pair<std::optional<DrmDevice>, std::optional<DrmDevice>> GetDrmCardRenderDe
         }
     }
 
-    if (all_cards.empty()) {
-        LOG(ERROR) << "No DRM card found";
-        return {};
-    }
-
     if (all_renders.empty()) {
         LOG(INFO) << "No DRM render found";
     } else {
@@ -230,30 +255,20 @@ std::pair<std::optional<DrmDevice>, std::optional<DrmDevice>> GetDrmCardRenderDe
         }
     }
 
-    auto [result_card_path, result_render_path] = SelectDrmCardPaths(all_cards);
+    return {std::move(all_cards), std::move(all_renders)};
+}
 
-    auto user_preferred_card_name = GetProperty(kBootPreferDrmCardNameProp, "");
-    if (!user_preferred_card_name.empty()) {
-        for (const auto& card : all_cards) {
-            if (card.name != user_preferred_card_name) continue;
-            LOG(INFO) << "Override DRM card selection from " << result_card_path;
-            result_card_path = card.path;
-            if (!card.card_have_render_path.empty()) {
-                LOG(INFO) << "Override DRM render selection from " << result_render_path;
-                result_render_path = card.card_have_render_path;
-            }
-            break;
-        }
+std::pair<std::optional<DrmDevice>, std::optional<DrmDevice>> GetDrmCardRenderDevicePair(void) {
+    DrmDevices devices = EnumerateDrmDevices();
+    std::vector<DrmDevice>& all_cards = devices.cards;
+    std::vector<DrmDevice>& all_renders = devices.renders;
+
+    if (all_cards.empty()) {
+        LOG(ERROR) << "No DRM card found";
+        return {};
     }
-    auto user_preferred_render_name = GetProperty(kBootPreferDrmRenderNameProp, "");
-    if (!user_preferred_render_name.empty()) {
-        for (const auto& render : all_renders) {
-            if (render.name != user_preferred_render_name) continue;
-            LOG(INFO) << "Override DRM render selection from " << result_render_path;
-            result_render_path = render.path;
-            break;
-        }
-    }
+
+    auto [result_card_path, result_render_path] = SelectDrmPaths(devices);
 
     LOG(INFO) << "Selected DRM card " << result_card_path << " and DRM render "
               << (result_render_path.empty() ? "(none)" : result_render_path);

@@ -8,6 +8,7 @@
 #include <optional>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include <android-base/unique_fd.h>
 
@@ -30,6 +31,15 @@ struct DrmDevice {
     std::string card_have_render_path;
     drmModeRes* drm_mode_res = nullptr;
 };
+
+struct DrmDevices {
+    std::vector<DrmDevice> cards;
+    std::vector<DrmDevice> renders;
+};
+
+// Open and probe every DRM node. A card gets the path of its render if it
+// has one.
+DrmDevices EnumerateDrmDevices();
 
 // Select the DRM card and its render. The other DRM nodes are hidden by
 // replacing them with symlinks to /dev/null.
