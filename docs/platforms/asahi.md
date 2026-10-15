@@ -79,7 +79,7 @@ Perform the following on the target device:
      `    search --file --no-floppy --set=root /android-Generic_arm64/kernel`.
    - On the line beginning with `    linux`, move the cursor to right
      before `$@` at the end of the line, and write
-     `androidboot.mount_firmware=only_android_dir androidboot.prefer_drm_render_name=asahi `.
+     `androidboot.mount_firmware=only_android_dir `.
    - Remove the entire block containing `Mount userdata from images`,
      as it does not match this setup.
 

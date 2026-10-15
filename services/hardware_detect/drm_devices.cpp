@@ -23,6 +23,8 @@
 #include <android-base/properties.h>
 #include <android-base/strings.h>
 
+#include "drivers/drivers.h"
+
 namespace fs = std::filesystem;
 using namespace android::base;
 
@@ -108,9 +110,32 @@ std::pair<std::string, std::string> SelectDrmCardPaths(const std::vector<DrmDevi
     return {all_cards.begin()->path, ""};
 }
 
+bool IsPlatformDrmDevice(const DrmDevice& dev) {
+    return dev.drm_device->bustype == DRM_BUS_PLATFORM;
+}
+
+// A card of an SoC has no render of its own when its GPU is another DRM
+// device, so the render of the SoC is used for it
+std::string FindSocRenderPath(const DrmDevices& devices, const std::string& card_path) {
+    for (const auto& card : devices.cards) {
+        if (card.path != card_path) continue;
+        if (card.is_sysfb || !card.card_have_render_path.empty()) return "";
+
+        for (const auto& render : devices.renders) {
+            if (!IsSocDrmDevicePair(card, render) || !IsDrmRenderUsable(render)) continue;
+            LOG(INFO) << "Select DRM render " << render.path << " of the SoC of the DRM card "
+                      << card_path;
+            return render.path;
+        }
+    }
+    return "";
+}
+
 // Apply the boot overrides to the selection of SelectDrmCardPaths()
 std::pair<std::string, std::string> SelectDrmPaths(const DrmDevices& devices) {
     auto [result_card_path, result_render_path] = SelectDrmCardPaths(devices.cards);
+    if (result_render_path.empty())
+        result_render_path = FindSocRenderPath(devices, result_card_path);
 
     auto user_preferred_card_name = GetProperty(kBootPreferDrmCardNameProp, "");
     if (!user_preferred_card_name.empty()) {
@@ -142,6 +167,10 @@ std::pair<std::string, std::string> SelectDrmPaths(const DrmDevices& devices) {
 }
 
 }  // namespace
+
+bool IsSocDrmDevicePair(const DrmDevice& a, const DrmDevice& b) {
+    return IsPlatformDrmDevice(a) && IsPlatformDrmDevice(b);
+}
 
 void CleanupDrmDevice(DrmDevice& dev) {
     if (dev.drm_device) drmFreeDevice(&dev.drm_device);

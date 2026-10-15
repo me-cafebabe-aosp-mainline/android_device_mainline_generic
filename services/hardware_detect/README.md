@@ -25,7 +25,10 @@ registered are treated as unknown.
    used when no DRM card is found.
 2. The DRM card and render are selected: sysfb cards (`simpledrm`, ...)
    and cards without a connected connector are the last choice, and a card
-   with its own render is preferred. The other devices are left alone;
+   with its own render is preferred. A card of an SoC (platform bus)
+   without a render of its own gets the usable render of the SoC, since
+   the GPU is another DRM device there (Apple, Allwinner, ...). The other
+   devices are left alone;
    Mesa is told the selected render node, and the other HALs the selected
    paths, by properties.
 3. Defaults for DRM display are set: minigbm gralloc, DRM HWC when atomic

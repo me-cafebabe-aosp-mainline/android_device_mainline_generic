@@ -37,6 +37,10 @@ struct DrmDevices {
     std::vector<DrmDevice> renders;
 };
 
+// Both devices are on the platform bus: an SoC, where the display and the GPU
+// are separate DRM devices (Apple, Allwinner, Rockchip...) that share memory.
+bool IsSocDrmDevicePair(const DrmDevice& a, const DrmDevice& b);
+
 // Open and probe every DRM node. A card gets the path of its render if it
 // has one.
 DrmDevices EnumerateDrmDevices();
