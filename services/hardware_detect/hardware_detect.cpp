@@ -33,6 +33,8 @@ constexpr char kHwcDrmDeviceProp[] = "vendor.hwc.drm.device";
 constexpr char kGrallocDeviceProp[] = "vendor.gralloc.device";
 constexpr char kMinigbmDeviceProp[] = "vendor.minigbm.device";
 constexpr char kMesaDrmRenderNodeProp[] = "vendor.mesa.drm.render.node";
+constexpr char kGrallocScanoutLinearProp[] = "vendor.gralloc.scanout_linear";
+constexpr char kMinigbmScanoutLinearProp[] = "vendor.minigbm.scanout_linear";
 
 constexpr char kUsbControllerProp[] = "sys.usb.controller";
 
@@ -102,6 +104,10 @@ void SetDefaultsForDrmDisplay(Selections& selections, const DrmDevice& card,
      */
     if (selections.hybrid_graphics && !IsSocDrmDevicePair(card, render.value())) {
         selections.hwc_apex = HwcApex::DrmFb;
+
+        // For drm_hwcomposer, if it is selected anyway
+        SetProperty(kGrallocScanoutLinearProp, "true");
+        SetProperty(kMinigbmScanoutLinearProp, "true");
     } else if (!drmSetClientCap(card.fd.get(), DRM_CLIENT_CAP_ATOMIC, 1)) {
         selections.hwc_apex = HwcApex::Drm;
         if (!IsDrmMultiplePlanesSupported(card)) {

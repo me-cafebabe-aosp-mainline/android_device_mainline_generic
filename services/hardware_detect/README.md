@@ -47,8 +47,9 @@ registered are treated as unknown.
 
 The card (display) and the render can be different devices, for example a
 `bochs-drm` display with a `virtio_gpu` or an `amdgpu` render. The pair
-is the same device by default. To select another render, give the card
-and the render names on the kernel command line:
+is the same device by default, or the display and the GPU of an SoC. To
+select another pair, give the card and the render names on the kernel
+command line:
 
 ```
 androidboot.prefer_drm_card_name=bochs-drm
@@ -65,7 +66,11 @@ which copies the buffers, since drm_hwcomposer imports them on the card
 and that cannot be relied on across devices. A basic card (`bochs-drm`,
 ...) uses it too. The devices of an SoC share memory, so they keep
 drm_hwcomposer. `androidboot.hwc_apex=1` selects drm_hwcomposer anyway,
-for trying a pair.
+for trying a pair. The gralloc and minigbm then allocate the buffers for
+scanout as linear (`vendor.gralloc.scanout_linear` and
+`vendor.minigbm.scanout_linear`, set for such a pair), since the display
+cannot use the modifiers of another GPU. Only the `gbm_mesa` gralloc and
+the `gbm_mesa` backend of minigbm support it.
 
 ## Properties
 
@@ -88,7 +93,8 @@ Set:
 Vulkan APEXes, `ro.vendor.graphics.card.name`,
 `ro.vendor.graphics.render.name`, `vendor.hwc.drm.device`,
 `vendor.gralloc.device`, `vendor.minigbm.device`,
-`vendor.mesa.drm.render.node`, `vendor.minigbm.generic_backend`,
+`vendor.mesa.drm.render.node`, `vendor.gralloc.scanout_linear`,
+`vendor.minigbm.scanout_linear`, `vendor.minigbm.generic_backend`,
 `vendor.sys.usb.adb.disabled`, `ro.surface_flinger.supports_background_blur`,
 and the quirk properties set by the drivers (`ro.vendor.hwc.drm.*`,
 `vendor.minigbm.*`, `vendor.mesa.*`).
