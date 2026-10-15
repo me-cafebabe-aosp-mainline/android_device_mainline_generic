@@ -199,7 +199,7 @@ endif
 
 # Permissions
 PRODUCT_COPY_FILES += \
-    frameworks/native/data/etc/pc_core_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/pc_core_hardware.xml
+    frameworks/native/data/etc/pc_core_hardware.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/sku_pc/pc_core_hardware.xml
 
 # Scoped Storage
 $(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
