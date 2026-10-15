@@ -44,7 +44,7 @@ Read (set on the kernel command line / bootconfig):
 | `ro.boot.use_fb_display` | Force the framebuffer display |
 | `ro.boot.graphics` | `swiftshader` forces software rendering |
 | `ro.boot.enum_drm_in_reverse` | Enumerate DRM nodes in reverse order |
-| `ro.boot.prefer_drm_card_name` | Prefer the card of the given DRM driver |
+| `ro.boot.prefer_drm_card_name` | Prefer the card of the given DRM driver, with its own render or none |
 | `ro.boot.prefer_drm_render_name` | Prefer the render of the given DRM driver |
 | `ro.boot.<name>` | Override a selection with the numeric value of its enum in `selections.h`. `<name>` is one of `gles_version`, `hw_egl`, `hw_vulkan`, `gralloc_apex`, `hwc_apex`, `usb_gadget_apex`, `vulkan_apex`, `minigbm_generic_backend`, `sf_native_window_buffers_format` |
 | `sys.usb.controller` | Presence enables the USB gadget APEX |

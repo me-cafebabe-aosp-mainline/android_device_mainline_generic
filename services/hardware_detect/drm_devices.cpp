@@ -118,8 +118,10 @@ std::pair<std::string, std::string> SelectDrmPaths(const DrmDevices& devices) {
             if (card.name != user_preferred_card_name) continue;
             LOG(INFO) << "Override DRM card selection from " << result_card_path;
             result_card_path = card.path;
-            if (!card.card_have_render_path.empty()) {
-                LOG(INFO) << "Override DRM render selection from " << result_render_path;
+            // The render of the previously selected card belongs to another device
+            if (result_render_path != card.card_have_render_path) {
+                LOG(INFO) << "Override DRM render selection from "
+                          << (result_render_path.empty() ? "(none)" : result_render_path);
                 result_render_path = card.card_have_render_path;
             }
             break;
@@ -129,7 +131,8 @@ std::pair<std::string, std::string> SelectDrmPaths(const DrmDevices& devices) {
     if (!user_preferred_render_name.empty()) {
         for (const auto& render : devices.renders) {
             if (render.name != user_preferred_render_name) continue;
-            LOG(INFO) << "Override DRM render selection from " << result_render_path;
+            LOG(INFO) << "Override DRM render selection from "
+                      << (result_render_path.empty() ? "(none)" : result_render_path);
             result_render_path = render.path;
             break;
         }
