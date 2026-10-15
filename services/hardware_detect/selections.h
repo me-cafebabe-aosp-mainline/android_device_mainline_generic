@@ -100,6 +100,7 @@ struct Selections {
 };
 
 bool IsForcedSwiftshader();
+bool IsForcedMesaSoftware();
 bool IsForcedFramebufferDisplay();
 
 // Process the boot overrides, and then set the properties according to

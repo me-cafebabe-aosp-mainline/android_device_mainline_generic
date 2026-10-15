@@ -34,8 +34,8 @@ registered are treated as unknown.
 3. Defaults for DRM display are set: minigbm gralloc, DRM HWC when atomic
    modesetting is available and the card and the render are the same
    device or on the same SoC, and Mesa, which is llvmpipe with lavapipe
-   when there is no render. `ro.boot.graphics=swiftshader` switches to
-   Swiftshader instead.
+   when there is no render. `ro.boot.graphics=llvmpipe` forces that, and
+   `ro.boot.graphics=swiftshader` switches to Swiftshader instead.
 4. A render that cannot do hardware rendering (`virtio_gpu` and `vmwgfx`
    without 3D, Intel Gen 2, `nouveau` before NV30) is checked by its
    driver, and selects Swiftshader. Its card still displays.
@@ -80,7 +80,7 @@ Read (set on the kernel command line / bootconfig):
 | Property | Meaning |
 |----------|---------|
 | `ro.boot.use_fb_display` | Force the framebuffer display |
-| `ro.boot.graphics` | `swiftshader` forces software rendering |
+| `ro.boot.graphics` | `swiftshader` forces software rendering with Swiftshader, `llvmpipe` with Mesa llvmpipe and lavapipe |
 | `ro.boot.enum_drm_in_reverse` | Enumerate DRM nodes in reverse order |
 | `ro.boot.prefer_drm_card_name` | Prefer the card of the given DRM driver, with its own render or none |
 | `ro.boot.prefer_drm_render_name` | Prefer the render of the given DRM driver |
@@ -95,6 +95,7 @@ Vulkan APEXes, `ro.vendor.graphics.card.name`,
 `ro.vendor.graphics.render.name`, `vendor.hwc.drm.device`,
 `vendor.gralloc.device`, `vendor.minigbm.device`,
 `vendor.mesa.drm.render.node`, `vendor.mesa.android.no.kms.swrast`,
+`vendor.mesa.libgl.always.software`,
 `vendor.gralloc.scanout_linear`,
 `vendor.minigbm.scanout_linear`, `vendor.minigbm.generic_backend`,
 `vendor.sys.usb.adb.disabled`, `ro.surface_flinger.supports_background_blur`,

@@ -34,6 +34,7 @@ constexpr char kGrallocDeviceProp[] = "vendor.gralloc.device";
 constexpr char kMinigbmDeviceProp[] = "vendor.minigbm.device";
 constexpr char kMesaDrmRenderNodeProp[] = "vendor.mesa.drm.render.node";
 constexpr char kMesaNoKmsSwrastProp[] = "vendor.mesa.android.no.kms.swrast";
+constexpr char kMesaAlwaysSoftwareProp[] = "vendor.mesa.libgl.always.software";
 constexpr char kGrallocScanoutLinearProp[] = "vendor.gralloc.scanout_linear";
 constexpr char kMinigbmScanoutLinearProp[] = "vendor.minigbm.scanout_linear";
 
@@ -130,6 +131,9 @@ void SetDefaultsForDrmDisplay(Selections& selections, const DrmDevice& card,
      */
     if (IsForcedSwiftshader()) {
         selections.UseSwiftshaderGraphics();
+    } else if (IsForcedMesaSoftware()) {
+        selections.UseMesaSoftwareGraphics();
+        SetProperty(kMesaAlwaysSoftwareProp, "true");
     } else {
         selections.hw_egl = HwEgl::Mesa;
         // Mesa llvmpipe and lavapipe
@@ -182,7 +186,7 @@ void DetectGraphics(Selections& selections) {
         DetectDrmRender(selections, drm_render.value(), drm_card.value());
 
         // Mesa uses only this device, so that it does not pick another GPU
-        if (selections.hw_egl == HwEgl::Mesa) {
+        if (selections.hw_egl == HwEgl::Mesa && !selections.uses_sw_rendered_graphics) {
             SetProperty(kMesaDrmRenderNodeProp, drm_render.value().path);
         }
     }

@@ -134,6 +134,10 @@ bool IsForcedSwiftshader() {
     return GetProperty(kBootGraphicsProp, "") == "swiftshader";
 }
 
+bool IsForcedMesaSoftware() {
+    return GetProperty(kBootGraphicsProp, "") == "llvmpipe";
+}
+
 bool IsForcedFramebufferDisplay() {
     return GetBoolProperty(kBootUseFbDisplayProp, false);
 }

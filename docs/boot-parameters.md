@@ -179,7 +179,8 @@ first.
 ### androidboot.graphics
 
 When set to `swiftshader`, SwiftShader (CPU-based rendering) is used
-if possible.
+if possible. When set to `llvmpipe`, Mesa llvmpipe and lavapipe
+(CPU-based rendering) are used instead.
 
 ### androidboot.use_fb_display
 
