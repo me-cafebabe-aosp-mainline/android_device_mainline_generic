@@ -75,7 +75,10 @@ and the quirk properties set by the drivers (`ro.vendor.hwc.drm.*`,
 - **radeon**: GLES by Mesa driver (r300g 2.0, R600~R700 3.0,
   Evergreen/NI 3.1, radeonsi 3.2), without Vulkan.
 - **nouveau**: GLES by chipset (NV30 2.0, NV50 3.0, Fermi and newer 3.1),
-  NVK for Kepler and newer, Swiftshader before NV30.
+  NVK for Kepler and newer, Swiftshader before NV30. Swiftshader is also
+  selected when the kernel has no acceleration, which is usually the
+  missing firmware of the GPU. It is detected by a channel allocation that
+  fails with `ENODEV` and never allocates a channel.
 - **msm**: GLES by Adreno series (a2xx 2.0, a3xx 3.0, a4xx and newer
   3.2, a702 3.1), Turnip for Adreno 6xx and newer. The GPU model is read
   with the MSM ioctls directly, because libdrm_freedreno refuses GPUs
