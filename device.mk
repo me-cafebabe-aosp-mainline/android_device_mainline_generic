@@ -199,7 +199,9 @@ endif
 
 # Permissions
 PRODUCT_COPY_FILES += \
-    frameworks/native/data/etc/pc_core_hardware.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/sku_pc/pc_core_hardware.xml
+    $(DEVICE_PATH)/configs/permissions/android.hardware.type.pc.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/sku_pc/android.hardware.type.pc.xml \
+    frameworks/native/data/etc/android.software.freeform_window_management.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/permissions/device_mainline_generic-android.software.freeform_window_management.xml \
+    frameworks/native/data/etc/tablet_core_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/tablet_core_hardware.xml
 
 # Scoped Storage
 $(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
