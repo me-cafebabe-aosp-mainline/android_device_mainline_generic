@@ -3,5 +3,5 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-firmware_directories /odm/firmware/ /mnt/vendor/firmware/
+firmware_directories /odm/firmware/ /mnt/vendor/firmware/ /mnt/vendor/generic_init/android/${ro.boot.android_dir:-android}/firmware
 modalias_handling enabled
