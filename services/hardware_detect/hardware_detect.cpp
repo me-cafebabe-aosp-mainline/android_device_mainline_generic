@@ -131,11 +131,8 @@ void SetDefaultsForDrmDisplay(Selections& selections, const DrmDevice& card,
         selections.UseSwiftshaderGraphics();
     } else {
         selections.hw_egl = HwEgl::Mesa;
-        if (!render.has_value()) {
-            // Mesa llvmpipe
-            selections.uses_sw_rendered_graphics = true;
-            selections.gles_version = kGlesVersion32;
-        }
+        // Mesa llvmpipe and lavapipe
+        if (!render.has_value()) selections.UseMesaSoftwareGraphics();
     }
 }
 

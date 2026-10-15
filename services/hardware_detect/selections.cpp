@@ -116,6 +116,13 @@ void Selections::UseSwiftshaderGraphics() {
     vulkan_apex = VulkanApex::Swiftshader;
 }
 
+void Selections::UseMesaSoftwareGraphics() {
+    uses_sw_rendered_graphics = true;
+    hw_egl = HwEgl::Mesa;
+    gles_version = kGlesVersion32;
+    hw_vulkan = HwVulkan::Lvp;
+}
+
 void Selections::SetupFramebufferDisplay() {
     gralloc_apex = GrallocApex::Fb;
     hwc_apex = HwcApex::Empty;

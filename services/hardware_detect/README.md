@@ -33,8 +33,9 @@ registered are treated as unknown.
    paths, by properties.
 3. Defaults for DRM display are set: minigbm gralloc, DRM HWC when atomic
    modesetting is available and the card and the render are the same
-   device or on the same SoC, and Mesa. `ro.boot.graphics=swiftshader`
-   switches to Swiftshader instead.
+   device or on the same SoC, and Mesa, which is llvmpipe with lavapipe
+   when there is no render. `ro.boot.graphics=swiftshader` switches to
+   Swiftshader instead.
 4. A render that cannot do hardware rendering (`virtio_gpu` and `vmwgfx`
    without 3D, Intel Gen 2, `nouveau` before NV30) is checked by its
    driver, and selects Swiftshader. Its card still displays.

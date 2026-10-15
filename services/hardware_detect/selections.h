@@ -95,6 +95,7 @@ struct Selections {
     android_pixel_format_t sf_native_window_buffers_format = HAL_PIXEL_FORMAT_RGBA_8888;
 
     void UseSwiftshaderGraphics();
+    void UseMesaSoftwareGraphics();
     void SetupFramebufferDisplay();
 };
 
