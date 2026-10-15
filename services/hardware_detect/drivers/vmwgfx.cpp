@@ -37,7 +37,7 @@ bool GetVmwgfxParam(int fd, uint32_t param, uint64_t* value) {
 // vgpu9 (no SM4) is GL 2.1, vgpu10 (SM4 / SM4.1) is GL 3.3, SM5 is GL 4.1
 // and GL43 is GL 4.3. Unlike vgpu9, vgpu10 and SM5 hosts can do GLES 3.0,
 // and GL43 hosts can do GLES 3.1.
-void DrmVmwgfxRender(Selections& selections, const DrmDevice& render) {
+void DrmVmwgfxRender(Selections& selections, const DrmDevice& render, const DrmDevice&) {
     uint64_t has_3d = 0, has_dx = 0, has_gl43 = 0;
 
     if (!GetVmwgfxParam(render.fd.get(), DRM_VMW_PARAM_3D, &has_3d)) {

@@ -33,7 +33,7 @@ constexpr uint32_t kNouveauChipsetNve0 = 0xe0;  // Kepler, minimum of NVK
 
 }  // namespace
 
-void DrmNouveauRender(Selections& selections, const DrmDevice& render) {
+void DrmNouveauRender(Selections& selections, const DrmDevice& render, const DrmDevice&) {
     selections.gralloc_apex = GrallocApex::GbmMesa;
 
     NouveauGetparam get_param = {

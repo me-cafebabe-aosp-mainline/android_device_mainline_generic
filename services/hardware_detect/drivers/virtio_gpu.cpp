@@ -58,7 +58,7 @@ void DrmVirtiogpuCard(Selections& selections, const DrmDevice& card,
     DrmVirtiogpu(selections, card.fd.get(), false, render.has_value() ? render.value().name : "");
 }
 
-void DrmVirtiogpuRender(Selections& selections, const DrmDevice& render) {
+void DrmVirtiogpuRender(Selections& selections, const DrmDevice& render, const DrmDevice&) {
     DrmVirtiogpu(selections, render.fd.get(), true, render.name);
 }
 

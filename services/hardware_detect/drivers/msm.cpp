@@ -99,7 +99,7 @@ void DrmMsmCard(Selections&, const DrmDevice& card, const std::optional<DrmDevic
     // device/mainline/qcom-common/services/msm_drm_quirks end
 }
 
-void DrmMsmRender(Selections& selections, const DrmDevice& render) {
+void DrmMsmRender(Selections& selections, const DrmDevice& render, const DrmDevice&) {
     const MsmGpu gpu = GetMsmGpu(render.fd.get());
     if (!gpu.series) return;
 

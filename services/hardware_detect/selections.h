@@ -81,6 +81,9 @@ enum class MinigbmGenericBackend : int {
 struct Selections {
     bool uses_sw_rendered_graphics = false;
 
+    // The DRM card (display) and the DRM render are different devices
+    bool hybrid_graphics = false;
+
     int gles_version = kGlesVersion20;
     HwEgl hw_egl = HwEgl::Unset;
     HwVulkan hw_vulkan = HwVulkan::Unset;

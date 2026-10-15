@@ -63,14 +63,14 @@ void DetectDrmCard(Selections& selections, const DrmDevice& card,
     }
 }
 
-void DetectDrmRender(Selections& selections, const DrmDevice& render) {
+void DetectDrmRender(Selections& selections, const DrmDevice& render, const DrmDevice& card) {
     if (selections.uses_sw_rendered_graphics) {
         // Nothing to do
         return;
     }
 
     if (auto it = kDrmRenderHandlers.find(render.name); it != kDrmRenderHandlers.end()) {
-        if (it->second) it->second(selections, render);
+        if (it->second) it->second(selections, render, card);
     } else {
         DrmUnknownRender(selections, render.name);
     }

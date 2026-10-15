@@ -26,7 +26,7 @@ bool RadeonIdsContain(const uint16_t (&ids)[N], uint16_t id) {
 
 }  // namespace
 
-void DrmAmdgpuRender(Selections& selections, const DrmDevice&) {
+void DrmAmdgpuRender(Selections& selections, const DrmDevice&, const DrmDevice&) {
     selections.gles_version = kGlesVersion32;
     selections.gralloc_apex = GrallocApex::GbmMesa;
     selections.hw_vulkan = HwVulkan::Radeon;
@@ -34,7 +34,7 @@ void DrmAmdgpuRender(Selections& selections, const DrmDevice&) {
 
 // Mesa supports the radeon kernel driver with r300g, r600g and radeonsi.
 // radv requires the amdgpu kernel driver, so there is no Vulkan.
-void DrmRadeonRender(Selections& selections, const DrmDevice& render) {
+void DrmRadeonRender(Selections& selections, const DrmDevice& render, const DrmDevice&) {
     selections.gralloc_apex = GrallocApex::GbmMesa;
 
     if (render.drm_device->bustype != DRM_BUS_PCI) {

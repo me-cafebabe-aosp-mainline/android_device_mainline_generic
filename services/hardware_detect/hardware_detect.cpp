@@ -146,6 +146,13 @@ void DetectGraphics(Selections& selections) {
     SetProperty(kGraphicsCardNameProp, drm_card.value().name);
     SetProperty(kGraphicsRenderNameProp, drm_render.has_value() ? drm_render.value().name : "");
 
+    if (drm_render.has_value() &&
+        !drmDevicesEqual(drm_card.value().drm_device, drm_render.value().drm_device)) {
+        LOG(INFO) << "DRM card " << drm_card.value().path << " and DRM render "
+                  << drm_render.value().path << " are different devices";
+        selections.hybrid_graphics = true;
+    }
+
     SetDefaultsForDrmDisplay(selections, drm_card.value(), drm_render);
 
     // DRM HWC tries the first or the specified card node
@@ -161,7 +168,7 @@ void DetectGraphics(Selections& selections) {
 
     // Render
     if (drm_render.has_value()) {
-        DetectDrmRender(selections, drm_render.value());
+        DetectDrmRender(selections, drm_render.value(), drm_card.value());
     }
 
     CleanupDrmDevice(drm_card.value());
