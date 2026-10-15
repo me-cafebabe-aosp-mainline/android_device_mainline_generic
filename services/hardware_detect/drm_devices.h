@@ -41,8 +41,7 @@ struct DrmDevices {
 // has one.
 DrmDevices EnumerateDrmDevices();
 
-// Select the DRM card and its render. The other DRM nodes are hidden by
-// replacing them with symlinks to /dev/null.
+// Select the DRM card and its render. The other DRM devices are closed.
 std::pair<std::optional<DrmDevice>, std::optional<DrmDevice>> GetDrmCardRenderDevicePair();
 
 void CleanupDrmDevice(DrmDevice& dev);

@@ -25,8 +25,9 @@ registered are treated as unknown.
    used when no DRM card is found.
 2. The DRM card and render are selected: sysfb cards (`simpledrm`, ...)
    and cards without a connected connector are the last choice, and a card
-   with its own render is preferred. The other nodes are renamed with an
-   `_orig` suffix and replaced by symlinks to `/dev/null`.
+   with its own render is preferred. The other devices are left alone;
+   Mesa is told the selected render node, and the other HALs the selected
+   paths, by properties.
 3. Defaults for DRM display are set: minigbm gralloc, DRM HWC when atomic
    modesetting is available, and Mesa. `ro.boot.graphics=swiftshader`
    switches to Swiftshader instead.

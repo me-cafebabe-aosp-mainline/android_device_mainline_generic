@@ -141,16 +141,6 @@ std::pair<std::string, std::string> SelectDrmPaths(const DrmDevices& devices) {
     return {result_card_path, result_render_path};
 }
 
-// Replace the DRM node with a symlink to /dev/null, so that nobody would
-// use it. The original node is kept with an "_orig" suffix.
-void HideDrmNode(const std::string& path) {
-    std::error_code ec;
-    fs::rename(path, path + "_orig", ec);
-    if (ec) LOG(ERROR) << "Failed to rename " << path << ": " << ec.message();
-    fs::create_symlink("/dev/null", path, ec);
-    if (ec) LOG(ERROR) << "Failed to hide " << path << ": " << ec.message();
-}
-
 }  // namespace
 
 void CleanupDrmDevice(DrmDevice& dev) {
@@ -282,7 +272,6 @@ std::pair<std::optional<DrmDevice>, std::optional<DrmDevice>> GetDrmCardRenderDe
             continue;
         }
         CleanupDrmDevice(card);
-        HideDrmNode(card.path);
     }
     for (auto& render : all_renders) {
         if (render.path == result_render_path) {
@@ -290,7 +279,6 @@ std::pair<std::optional<DrmDevice>, std::optional<DrmDevice>> GetDrmCardRenderDe
             continue;
         }
         CleanupDrmDevice(render);
-        HideDrmNode(render.path);
     }
     return {std::move(result_card), std::move(result_render)};
 }
