@@ -39,6 +39,27 @@ registered are treated as unknown.
    driver, gralloc, and quirks).
 5. The boot overrides are processed and the properties are set.
 
+## Hybrid graphics
+
+The card (display) and the render can be different devices, for example a
+`bochs-drm` display with a `virtio_gpu` or an `amdgpu` render. The pair
+is the same device by default. To select another render, give the card
+and the render names on the kernel command line:
+
+```
+androidboot.prefer_drm_card_name=bochs-drm
+androidboot.prefer_drm_render_name=virtio_gpu
+```
+
+The render handlers see both devices, and `hybrid_graphics` is set when
+they differ. Mesa uses only the render node of
+`vendor.mesa.drm.render.node`, and the HALs use the paths of the card and
+the render. The other DRM nodes are left alone.
+
+A basic card (`bochs-drm`, ...) is displayed by drmfb-composer, which
+copies the buffers of the render. Buffers for drm_hwcomposer are not
+checked yet for being importable by a card of another device.
+
 ## Properties
 
 Read (set on the kernel command line / bootconfig):
