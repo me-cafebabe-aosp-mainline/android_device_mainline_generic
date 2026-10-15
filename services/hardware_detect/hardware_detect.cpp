@@ -4,6 +4,7 @@
 */
 
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 
 #include <optional>
@@ -14,6 +15,7 @@
 #include <android-base/logging.h>
 #include <android-base/properties.h>
 
+#include <drm_fourcc.h>
 #include <xf86drm.h>
 #include <xf86drmMode.h>
 
@@ -32,6 +34,7 @@ constexpr char kGraphicsRenderNameProp[] = "ro.vendor.graphics.render.name";
 constexpr char kHwcDrmDeviceProp[] = "vendor.hwc.drm.device";
 constexpr char kGrallocDeviceProp[] = "vendor.gralloc.device";
 constexpr char kMinigbmDeviceProp[] = "vendor.minigbm.device";
+constexpr char kAvoidAlphaBitsProp[] = "ro.vendor.hwc.drm.avoid_using_alpha_bits_for_framebuffer";
 constexpr char kMesaDrmRenderNodeProp[] = "vendor.mesa.drm.render.node";
 constexpr char kMesaNoKmsSwrastProp[] = "vendor.mesa.android.no.kms.swrast";
 constexpr char kMesaAlwaysSoftwareProp[] = "vendor.mesa.libgl.always.software";
@@ -39,6 +42,70 @@ constexpr char kGrallocScanoutLinearProp[] = "vendor.gralloc.scanout_linear";
 constexpr char kMinigbmScanoutLinearProp[] = "vendor.minigbm.scanout_linear";
 
 constexpr char kUsbControllerProp[] = "sys.usb.controller";
+
+// What the primary planes of a card can scan out of the framebuffers of Android. HWC uses
+// ABGR8888 for RGBA_8888, or XBGR8888 when it is told to avoid the alpha bits.
+enum class PrimaryPlaneFormats {
+    Unknown,
+    None,
+    Xbgr,
+    Abgr,
+};
+
+bool IsPrimaryPlane(int fd, uint32_t plane_id) {
+    drmModeObjectProperties* props =
+            drmModeObjectGetProperties(fd, plane_id, DRM_MODE_OBJECT_PLANE);
+    if (!props) return false;
+
+    bool primary = false;
+    for (uint32_t i = 0; i < props->count_props; ++i) {
+        drmModePropertyRes* prop = drmModeGetProperty(fd, props->props[i]);
+        if (!prop) continue;
+        if (strcmp(prop->name, "type") == 0) {
+            primary = props->prop_values[i] == DRM_PLANE_TYPE_PRIMARY;
+        }
+        drmModeFreeProperty(prop);
+    }
+
+    drmModeFreeObjectProperties(props);
+    return primary;
+}
+
+// The result is the formats that all the primary planes support. It needs the universal
+// planes, which the atomic client capability enables.
+PrimaryPlaneFormats GetPrimaryPlaneFormats(const DrmDevice& card) {
+    drmModePlaneRes* planeRes = drmModeGetPlaneResources(card.fd.get());
+    if (!planeRes) {
+        LOG(ERROR) << "Failed to get plane resources";
+        return PrimaryPlaneFormats::Unknown;
+    }
+
+    bool found = false, all_abgr = true, all_xbgr = true;
+
+    for (uint32_t i = 0; i < planeRes->count_planes; ++i) {
+        drmModePlane* plane = drmModeGetPlane(card.fd.get(), planeRes->planes[i]);
+        if (!plane) continue;
+
+        if (IsPrimaryPlane(card.fd.get(), plane->plane_id)) {
+            bool abgr = false, xbgr = false;
+            for (uint32_t j = 0; j < plane->count_formats; ++j) {
+                abgr |= plane->formats[j] == DRM_FORMAT_ABGR8888;
+                xbgr |= plane->formats[j] == DRM_FORMAT_XBGR8888;
+            }
+            found = true;
+            all_abgr &= abgr;
+            all_xbgr &= xbgr;
+        }
+
+        drmModeFreePlane(plane);
+    }
+
+    drmModeFreePlaneResources(planeRes);
+
+    if (!found) return PrimaryPlaneFormats::Unknown;
+    if (all_abgr) return PrimaryPlaneFormats::Abgr;
+    return all_xbgr ? PrimaryPlaneFormats::Xbgr : PrimaryPlaneFormats::None;
+}
 
 bool IsDrmMultiplePlanesSupported(const DrmDevice& card) {
     drmModePlaneRes* planeRes = drmModeGetPlaneResources(card.fd.get());
@@ -112,7 +179,21 @@ void SetDefaultsForDrmDisplay(Selections& selections, const DrmDevice& card,
         SetProperty(kMinigbmScanoutLinearProp, "true");
     } else if (!drmSetClientCap(card.fd.get(), DRM_CLIENT_CAP_ATOMIC, 1)) {
         selections.hwc_apex = HwcApex::Drm;
-        if (!IsDrmMultiplePlanesSupported(card)) {
+
+        // A card that cannot scan out the framebuffers cannot be used by drm_hwcomposer
+        switch (GetPrimaryPlaneFormats(card)) {
+            case PrimaryPlaneFormats::Xbgr:
+                SetProperty(kAvoidAlphaBitsProp, "1");
+                break;
+            case PrimaryPlaneFormats::None:
+                LOG(INFO) << "The primary planes cannot scan out ABGR8888 and XBGR8888";
+                selections.hwc_apex = HwcApex::DrmFb;
+                break;
+            default:
+                break;
+        }
+
+        if (selections.hwc_apex == HwcApex::Drm && !IsDrmMultiplePlanesSupported(card)) {
             SetProperty("ro.vendor.hwc.drm.disable_planes", "1");
         }
     } else {

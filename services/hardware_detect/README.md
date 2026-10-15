@@ -32,9 +32,11 @@ registered are treated as unknown.
    Mesa is told the selected render node, and the other HALs the selected
    paths, by properties.
 3. Defaults for DRM display are set: minigbm gralloc, DRM HWC when atomic
-   modesetting is available and the card and the render are the same
-   device or on the same SoC, and Mesa, which is llvmpipe with lavapipe
-   when there is no render. `ro.boot.graphics=llvmpipe` forces that, and
+   modesetting is available, the primary planes can scan out the
+   framebuffers of Android (ABGR8888, or XBGR8888 with
+   `ro.vendor.hwc.drm.avoid_using_alpha_bits_for_framebuffer`), and the
+   card and the render are the same device or on the same SoC, and Mesa,
+   which is llvmpipe with lavapipe when there is no render. `ro.boot.graphics=llvmpipe` forces that, and
    `ro.boot.graphics=swiftshader` switches to Swiftshader instead.
 4. A render that cannot do hardware rendering (`virtio_gpu` and `vmwgfx`
    without 3D, Intel Gen 2, `nouveau` before NV30) is checked by its
