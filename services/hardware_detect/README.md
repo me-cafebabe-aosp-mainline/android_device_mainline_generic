@@ -32,7 +32,8 @@ registered are treated as unknown.
    Mesa is told the selected render node, and the other HALs the selected
    paths, by properties.
 3. Defaults for DRM display are set: minigbm gralloc, DRM HWC when atomic
-   modesetting is available, and Mesa. `ro.boot.graphics=swiftshader`
+   modesetting is available and the card and the render are the same
+   device or on the same SoC, and Mesa. `ro.boot.graphics=swiftshader`
    switches to Swiftshader instead.
 4. A render that cannot do hardware rendering (`virtio_gpu` and `vmwgfx`
    without 3D, Intel Gen 2, `nouveau` before NV30) is checked by its
@@ -59,9 +60,12 @@ they differ. Mesa uses only the render node of
 `vendor.mesa.drm.render.node`, and the HALs use the paths of the card and
 the render. The other DRM nodes are left alone.
 
-A basic card (`bochs-drm`, ...) is displayed by drmfb-composer, which
-copies the buffers of the render. Buffers for drm_hwcomposer are not
-checked yet for being importable by a card of another device.
+A card that displays the render of another device uses drmfb-composer,
+which copies the buffers, since drm_hwcomposer imports them on the card
+and that cannot be relied on across devices. A basic card (`bochs-drm`,
+...) uses it too. The devices of an SoC share memory, so they keep
+drm_hwcomposer. `androidboot.hwc_apex=1` selects drm_hwcomposer anyway,
+for trying a pair.
 
 ## Properties
 

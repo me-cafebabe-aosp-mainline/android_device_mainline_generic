@@ -95,8 +95,14 @@ void SetDefaultsForDrmDisplay(Selections& selections, const DrmDevice& card,
      *
      * drm_hwcomposer-upstream for full-fledged support
      * (however we have some hacks in there too)
+     *
+     * drmfb-composer for a card that displays buffers of another
+     * device's render, since drm_hwcomposer would import them on the card.
+     * It works on an SoC, where the devices share memory.
      */
-    if (!drmSetClientCap(card.fd.get(), DRM_CLIENT_CAP_ATOMIC, 1)) {
+    if (selections.hybrid_graphics && !IsSocDrmDevicePair(card, render.value())) {
+        selections.hwc_apex = HwcApex::DrmFb;
+    } else if (!drmSetClientCap(card.fd.get(), DRM_CLIENT_CAP_ATOMIC, 1)) {
         selections.hwc_apex = HwcApex::Drm;
         if (!IsDrmMultiplePlanesSupported(card)) {
             SetProperty("ro.vendor.hwc.drm.disable_planes", "1");
