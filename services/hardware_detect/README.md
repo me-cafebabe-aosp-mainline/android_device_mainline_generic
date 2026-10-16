@@ -75,6 +75,13 @@ scanout as linear (`vendor.gralloc.scanout_linear` and
 cannot use the modifiers of another GPU. Only the `gbm_mesa` gralloc and
 the `gbm_mesa` backend of minigbm support it.
 
+`androidboot.prefer_discrete_render=true` selects such a pair when the
+card is a PCI device on the root bus (an integrated GPU, an Intel iGPU
+for example) and a usable render is a PCI device behind a bridge (a card
+in a slot). Otherwise nothing changes. An APU display and a render of
+the same driver are not told apart, give the names for them. The names
+above take precedence.
+
 ## Properties
 
 Read (set on the kernel command line / bootconfig):
@@ -86,6 +93,7 @@ Read (set on the kernel command line / bootconfig):
 | `ro.boot.enum_drm_in_reverse` | Enumerate DRM nodes in reverse order |
 | `ro.boot.prefer_drm_card_name` | Prefer the card of the given DRM driver, with its own render or none |
 | `ro.boot.prefer_drm_render_name` | Prefer the render of the given DRM driver |
+| `ro.boot.prefer_discrete_render` | Render with a discrete GPU in a slot when the display is an integrated GPU |
 | `ro.boot.<name>` | Override a selection with the numeric value of its enum in `selections.h`. `<name>` is one of `gles_version`, `hw_egl`, `hw_vulkan`, `gralloc_apex`, `hwc_apex`, `usb_gadget_apex`, `vulkan_apex`, `minigbm_generic_backend`, `sf_native_window_buffers_format` |
 | `sys.usb.controller` | Presence enables the USB gadget APEX |
 

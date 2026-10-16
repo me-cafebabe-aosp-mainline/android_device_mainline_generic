@@ -35,6 +35,7 @@ namespace {
 constexpr char kBootEnumDrmInReverseProp[] = "ro.boot.enum_drm_in_reverse";
 constexpr char kBootPreferDrmCardNameProp[] = "ro.boot.prefer_drm_card_name";
 constexpr char kBootPreferDrmRenderNameProp[] = "ro.boot.prefer_drm_render_name";
+constexpr char kBootPreferDiscreteRenderProp[] = "ro.boot.prefer_discrete_render";
 
 const std::set<std::string> kDrmSysfbNames = {
         "efidrm",
@@ -131,6 +132,32 @@ std::string FindSocRenderPath(const DrmDevices& devices, const std::string& card
     return "";
 }
 
+// A PCI device on the root bus is integrated into the processor or the
+// chipset, an Intel iGPU for example. A GPU behind a bridge is a card in a slot.
+bool IsPciRootBusDrmDevice(const DrmDevice& dev) {
+    return dev.drm_device->bustype == DRM_BUS_PCI && dev.drm_device->businfo.pci->bus == 0;
+}
+
+bool IsPciSlotDrmDevice(const DrmDevice& dev) {
+    return dev.drm_device->bustype == DRM_BUS_PCI && dev.drm_device->businfo.pci->bus != 0;
+}
+
+// Returns the path of the first usable render in a slot when the card is
+// integrated, or an empty string
+std::string FindDiscreteRenderPath(const DrmDevices& devices, const std::string& card_path) {
+    for (const auto& card : devices.cards) {
+        if (card.path != card_path) continue;
+        if (!IsPciRootBusDrmDevice(card)) return "";
+
+        for (const auto& render : devices.renders) {
+            if (!IsPciSlotDrmDevice(render) || !IsDrmRenderUsable(render)) continue;
+            LOG(INFO) << "Select DRM render " << render.path << " of a discrete GPU";
+            return render.path;
+        }
+    }
+    return "";
+}
+
 // Apply the boot overrides to the selection of SelectDrmCardPaths()
 std::pair<std::string, std::string> SelectDrmPaths(const DrmDevices& devices) {
     auto [result_card_path, result_render_path] = SelectDrmCardPaths(devices.cards);
@@ -151,6 +178,10 @@ std::pair<std::string, std::string> SelectDrmPaths(const DrmDevices& devices) {
             }
             break;
         }
+    }
+    if (GetBoolProperty(kBootPreferDiscreteRenderProp, false)) {
+        std::string discrete_render_path = FindDiscreteRenderPath(devices, result_card_path);
+        if (!discrete_render_path.empty()) result_render_path = discrete_render_path;
     }
     auto user_preferred_render_name = GetProperty(kBootPreferDrmRenderNameProp, "");
     if (!user_preferred_render_name.empty()) {

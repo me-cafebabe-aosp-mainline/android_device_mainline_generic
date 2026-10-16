@@ -170,6 +170,14 @@ Use the DRM card with the specified name if present.
 
 Use the DRM render node with the specified name if present.
 
+### androidboot.prefer_discrete_render
+
+When set to `true` and the display is an integrated GPU (a PCI device on
+the root bus), render with the first usable GPU that is in a slot, and
+display through the integrated one. `prefer_drm_render_name` takes
+precedence. See the hybrid graphics section of the
+[hardware_detect README](../services/hardware_detect/README.md).
+
 ### androidboot.enum_drm_in_reverse
 
 When set to `true`, DRM devices are enumerated in reverse order. Use
