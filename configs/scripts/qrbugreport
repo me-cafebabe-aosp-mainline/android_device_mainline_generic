@@ -17,4 +17,4 @@ uname -r
 
 echo '##### Bug report QR code #####'
 #[ "$(mount|grep ' /sys/kernel/debug ')" ] || mount -t debugfs none /sys/kernel/debug
-collect 2>/dev/null | /vendor/bin/qrencode -m 2 -t ANSIUTF8 2>/dev/null
+collect 2>/dev/null | /vendor/bin/qrencode -m 2 -t ANSIUTF8 --side-by-side -v 20 --strict-version 2>/dev/null
