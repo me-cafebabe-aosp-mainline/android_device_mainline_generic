@@ -25,4 +25,5 @@ configuration of target devices in this device tree:
 | https://android.googlesource.com/kernel/common | `kernel/mainline/android-mainline` | `android-mainline` |
 
 If you will use a different kernel configuration, some of these
-repositories may not be needed.
+repositories may not be needed. See [porting](porting.md#create-a-custom-kernel-build-configuration)
+for the available kernel configurations.

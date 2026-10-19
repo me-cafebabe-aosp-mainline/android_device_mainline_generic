@@ -62,7 +62,7 @@ BOARD_MESA3D_VULKAN_DRIVERS += \
 $(call soong_config_set_bool,minigbm_upstream,disable_virgl_native_yuv,true)
 
 # Kernel
-MAINLINE_GENERIC_KERNEL_USE ?= gki_debian
+MAINLINE_GENERIC_KERNEL_USE ?= debian
 MAINLINE_GENERIC_KERNEL_BOARDCONFIG_MK ?= $(TARGET_DEVICE_PATH)/kernels/$(MAINLINE_GENERIC_KERNEL_USE)/board.mk
 include $(MAINLINE_GENERIC_KERNEL_BOARDCONFIG_MK)
 

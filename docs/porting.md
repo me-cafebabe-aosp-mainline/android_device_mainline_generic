@@ -29,8 +29,18 @@ You will need to obtain:
 
 ## Create a custom kernel build configuration
 
-If the target device will not use the default kernel build
-configuration, create its own kernel build configuration as follows.
+The default kernel build configuration is `debian`: the Debian kernel
+config files (`Generic_*/kernels/debian`) merged with the Android
+kernel config fragments. Other
+available ones can be selected with
+`export MAINLINE_GENERIC_KERNEL_USE=<name>`, where `<name>` is:
+
+- `gki_debian`: `gki_defconfig` plus the Debian kernel config fragments
+  (`Generic_*/kernels/gki_debian`).
+- another directory in `Generic_*/kernels`, such as `asahi`.
+
+If the target device will not use any of them, create its own kernel
+build configuration as follows.
 
 Create a `.mk` file in the Android source tree at the location
 designated for kernel build configuration, and specify the path to it
