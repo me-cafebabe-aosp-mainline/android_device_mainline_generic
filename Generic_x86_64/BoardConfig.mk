@@ -29,14 +29,3 @@ BOARD_MESA3D_VULKAN_DRIVERS += \
 
 # Graphics allocator (minigbm)
 $(call soong_config_set,minigbm_upstream,platform,all_x86)
-
-# Kernel
-ifeq ($(MAINLINE_GENERIC_KERNEL_BOARDCONFIG_MK),)
-BOARD_KERNEL_IMAGE_NAME := bzImage
-TARGET_KERNEL_CONFIG_EXT := \
-    $(TARGET_DEVICE_PATH)/configs/kernel/pre-debian.config \
-    $(PRODUCT_OUT)/obj/KCONFIG_OBJ/debian-filtered.config \
-    $(DEVICE_PATH)/configs/kernel/fix-build.config \
-    kernel/mainline/configs/fragments/y/fbcon.config \
-    $(DEVICE_PATH)/configs/kernel/customizations.config
-endif
