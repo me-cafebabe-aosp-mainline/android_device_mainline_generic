@@ -28,7 +28,8 @@ bool RadeonIdsContain(const uint16_t (&ids)[N], uint16_t id) {
 
 void DrmAmdgpuRender(Selections& selections, const DrmDevice&, const DrmDevice&) {
     selections.gles_version = kGlesVersion32;
-    selections.gralloc_apex = GrallocApex::GbmMesa;
+    // The amdgpu backend of minigbm allocates through Mesa's GBM
+    selections.gralloc_apex = GrallocApex::Minigbm;
     selections.hw_vulkan = HwVulkan::Radeon;
 }
 

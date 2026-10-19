@@ -118,7 +118,11 @@ and the quirk properties set by the drivers (`ro.vendor.hwc.drm.*`,
   no Mesa driver (Swiftshader), Gen 3~5 get GLES 2.0 without Vulkan,
   Gen 6 GLES 3.0 without Vulkan, Gen 7 GLES 3.1 and Gen 8 GLES 3.2 with
   `intel_hasvk`, and Gen 9+ GLES 3.2 with `intel`. Unlisted IDs are Gen 9+.
-- **amdgpu**: GLES 3.2 and `radv`.
+- **amdgpu**: GLES 3.2 and `radv`, with the `amdgpu` backend of minigbm,
+  which allocates through Mesa's GBM (linear only without it, or with
+  `debug.minigbm.amdgpu.linear_only=true`). It allocates scanout buffers as
+  linear, so it needs no `scanout_linear`. `androidboot.gralloc_apex=3`
+  selects the `gbm_mesa` gralloc instead.
 - **radeon**: GLES by Mesa driver (r300g 2.0, R600~R700 3.0,
   Evergreen/NI 3.1, radeonsi 3.2), without Vulkan.
 - **nouveau**: GLES by chipset (NV30 2.0, NV50 3.0, Fermi and newer 3.1),
