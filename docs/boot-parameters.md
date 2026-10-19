@@ -227,6 +227,11 @@ that device.
 Sets the logcat buffer(s) printed to the serial device. The value is
 passed directly to the `-b` option of `logcat`.
 
+### androidboot.suspend
+
+When set to `1`, `suspend_blocker` is disabled and the system shall
+enter suspend normally.
+
 ### androidboot.wifi_impl
 
 When set to `virt_wifi`, the `setup_wifi` service starts and creates a

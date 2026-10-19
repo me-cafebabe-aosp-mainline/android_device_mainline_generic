@@ -88,6 +88,10 @@ on init
 on late-fs
     mount_all --late
 
+# Suspend
+on early-init && property:ro.boot.suspend=1
+    stop suspend_blocker
+
 # VirtWifi
 on post-fs-data && property:ro.boot.wifi_impl=virt_wifi
     start setup_wifi
