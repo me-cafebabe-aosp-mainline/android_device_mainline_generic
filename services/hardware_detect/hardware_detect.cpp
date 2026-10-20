@@ -40,6 +40,7 @@ constexpr char kMesaNoKmsSwrastProp[] = "vendor.mesa.android.no.kms.swrast";
 constexpr char kMesaAlwaysSoftwareProp[] = "vendor.mesa.libgl.always.software";
 constexpr char kGrallocScanoutLinearProp[] = "vendor.gralloc.scanout_linear";
 constexpr char kMinigbmScanoutLinearProp[] = "vendor.minigbm.scanout_linear";
+constexpr char kMinigbmAmdgpuLinearOnlyProp[] = "vendor.minigbm.amdgpu.linear_only";
 
 constexpr char kUsbControllerProp[] = "sys.usb.controller";
 
@@ -276,6 +277,11 @@ void DetectGraphics(Selections& selections) {
     // open it becomes the DRM master, and then the HWC cannot control the display.
     if (selections.hw_egl == HwEgl::Mesa && selections.uses_sw_rendered_graphics) {
         SetProperty(kMesaNoKmsSwrastProp, "true");
+    }
+
+    // Software rendering reads and writes the buffers by CPU, tiled ones would only be detiled
+    if (selections.uses_sw_rendered_graphics) {
+        SetProperty(kMinigbmAmdgpuLinearOnlyProp, "true");
     }
 
     CleanupDrmDevice(drm_card.value());

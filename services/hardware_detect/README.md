@@ -107,7 +107,8 @@ Vulkan APEXes, `ro.vendor.graphics.card.name`,
 `vendor.mesa.drm.render.node`, `vendor.mesa.android.no.kms.swrast`,
 `vendor.mesa.libgl.always.software`,
 `vendor.gralloc.scanout_linear`,
-`vendor.minigbm.scanout_linear`, `vendor.minigbm.generic_backend`,
+`vendor.minigbm.scanout_linear`, `vendor.minigbm.amdgpu.linear_only` (software
+rendering), `vendor.minigbm.generic_backend`,
 `vendor.sys.usb.adb.disabled`, `ro.surface_flinger.supports_background_blur`,
 and the quirk properties set by the drivers (`ro.vendor.hwc.drm.*`,
 `vendor.minigbm.*`, `vendor.mesa.*`).
