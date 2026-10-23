@@ -1,0 +1,42 @@
+#!/bin/sh
+#
+# SPDX-FileCopyrightText: The LineageOS Project
+# SPDX-License-Identifier: Apache-2.0
+#
+# initramfs-tools hook of @DEB_PACKAGE@: adds the modules which
+# @BOOTMGR_ANDROID_DISTRIBUTION_NAME@ loads before it mounts its partitions
+# (filesystems, mostly) to the initramfs, as the Debian initramfs is the
+# beginning of its ramdisk.
+#
+
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+case "$1" in
+prereqs) prereqs; exit 0 ;;
+esac
+
+. /usr/share/initramfs-tools/hook-functions
+
+share=/usr/share/@DEB_PACKAGE@
+
+if [ -f "$share/modules.load.ramdisk" ]; then
+    while read -r module; do
+        case "$module" in
+        ''|'#'*) continue ;;
+        esac
+        module=${module%.ko}
+        manual_add_modules "${module%%.*}"
+    done < "$share/modules.load.ramdisk"
+fi
+
+# The modules whose names start with these
+if [ -f "$share/modules.load_prefix.ramdisk" ]; then
+    while read -r prefix; do
+        case "$prefix" in
+        ''|'#'*) continue ;;
+        esac
+        for module in $(find "/lib/modules/${version}" -name "${prefix}*.ko*" -printf '%f\n'); do
+            manual_add_modules "${module%%.*}"
+        done
+    done < "$share/modules.load_prefix.ramdisk"
+fi

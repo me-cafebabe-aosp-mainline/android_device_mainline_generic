@@ -17,6 +17,7 @@ The output is `$ANDROID_PRODUCT_OUT/<artifact prefix>_<arch>.deb`.
 | Variable | Default | Meaning |
 |----------|---------|---------|
 | `MAINLINE_GENERIC_DEBPACKAGE_MAINTAINER` | `Unknown <unknown@localhost>` | `Maintainer` field of the package |
+| `TARGET_NO_KERNEL` | unset | `true`: the package has no kernel and boots Android with the kernel of the distribution, see [Without a kernel](#without-a-kernel) |
 
 The package is built with `dpkg-deb` (from `dpkg`) of the build host.
 It is not compressed, because its content already is.
@@ -31,7 +32,9 @@ It is not compressed, because its content already is.
   there.
 - Secure Boot disabled, or the kernel signed with a key the firmware
   trusts. The package ships its own kernel, because the Android
-  configuration is done in the kernel config.
+  configuration is done in the kernel config. Built without a kernel, it
+  uses the kernel of the distribution, which is signed for Secure Boot
+  there, see [Without a kernel](#without-a-kernel).
 
 ## What it installs
 
@@ -62,9 +65,79 @@ Run `dpkg-reconfigure <package>` after changing it. It creates the
 user data directories or images that are missing, and updates
 `grub.cfg`.
 
+## Without a kernel
+
+With `TARGET_NO_KERNEL=true` the build has no kernel, and the package
+boots Android with the Debian kernel of the system it is installed on.
+Which kernel that is, is only known at installation: nothing about the
+kernel is taken from the build host.
+
+The Android directory has the pieces of the ramdisk in `ramdisk/`, and
+the package has a program, `/usr/share/<package>/update`, that makes the
+files GRUB loads:
+
+| File in the Android directory | Content |
+|-------------------------------|---------|
+| `kernel` | A copy of `/boot/vmlinuz-<version>` |
+| `ramdisk-all-combined.img` | The initramfs Debian made for that kernel, as it is, followed by the Android ramdisk |
+| `modules-overlay/<version>/` | `modules.load` and `modules.options` for the modules of Debian |
+
+The kernel is the newest one, or `ANDROID_HOST_KERNEL_VERSION` in
+`/etc/default/<package>`. The files are made when the package is
+installed, whenever `update-initramfs` makes the initramfs of that
+kernel (so after each kernel upgrade), and when a kernel is removed.
+To make them again by hand, run `/usr/share/<package>/update`.
+
+The Android ramdisk is decompressed and compressed again as the Debian
+initramfs is (zstd, xz, gzip, ...), whatever its compression is. Its
+`/lib` is merged into `/usr/lib` of the Debian initramfs, which is a
+symbolic link there. It needs the filesystem and `nls` modules from
+`modules.load.ramdisk` in the initramfs: a hook of the package adds them
+to it.
+
+The modules are loaded in two steps, as for an Android kernel, and
+before `/system/bin/init` starts:
+
+1. `generic_init` loads the modules of `modules.load.ramdisk` from
+   `/lib/modules/<version>` of the Debian initramfs, which has
+   them compressed (`.ko.xz`). Debian's `modules.dep` is used.
+2. After the Android partitions are mounted, an addon fstab of the
+   ramdisk (`fstab.generic_init.addon.debian_modules`, selected by
+   `androidboot.addon_fstab_suffix`, which the GRUB entry sets) mounts an
+   overlay on the empty `/vendor_dlkm/lib/modules`: the modules of the
+   Debian system (`/usr/lib/modules`) with `modules-overlay` on top.
+   `/vendor/lib/modules` is a symbolic link to there, so `generic_init`
+   loads `modules.load` of `modules-overlay`: the modules of
+   `kernel/mainline/configs/modprobe/modules.load`,
+   `configs/modprobe/modules.load` and `configs/modprobe/modules.load.debian`
+   that the kernel has. The uevents of
+   hardware load all the others, and `modprobe_kernel` the ones asked
+   by name.
+
+The firmware is the one of the Debian system (`/usr/lib/firmware`), whose
+compressed files `generic_init` can use.
+
+Requirements of this mode:
+
+- `/usr/lib` (the modules) is on the filesystem of the Android directory,
+  as the overlay reads them from there. Otherwise only the modules in the
+  initramfs are loaded.
+- The kernel has the options Android needs (SELinux, PSI, ...). The
+  Debian one may not have them all. Its `CONFIG_LSM` has AppArmor before
+  SELinux, which would stay disabled: the GRUB entry adds
+  `security=selinux`. Binder is a module there:
+  `configs/modprobe/modules.load.debian` lists it, as nothing loads it
+  by itself like the modules that are loaded on demand, and
+  `modules.options` gives it the devices `binder,hwbinder,vndbinder`
+  (`CONFIG_ANDROID_BINDER_DEVICES` is only `binder`, and Debian has no
+  binderfs).
+- The installation has `python3`, `initramfs-tools`, `kmod` and the
+  compression tools; the package depends on them.
+
 ## Upgrades, removal and downgrades
 
-- Upgrading keeps the user data.
+- Upgrading keeps the user data. Without a kernel, the kernel and
+  ramdisk files are made again.
 - `apt remove` keeps the user data and the configuration. `apt purge`
   deletes both.
 - Downgrading is refused while user data exists, because Android can not

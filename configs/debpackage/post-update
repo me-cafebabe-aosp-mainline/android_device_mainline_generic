@@ -1,0 +1,18 @@
+#!/bin/sh
+#
+# SPDX-FileCopyrightText: The LineageOS Project
+# SPDX-License-Identifier: Apache-2.0
+#
+# /etc/initramfs/post-update.d hook of @DEB_PACKAGE@: update-initramfs gives
+# the kernel version and the initramfs it made. Makes the Android boot files
+# for the kernel, after its initramfs.
+#
+
+set -e
+
+version=$1
+[ -n "$version" ] || exit 0
+
+/usr/share/@DEB_PACKAGE@/update "$version" ||
+    echo "@DEB_PACKAGE@: could not update @ANDROID_DIR@ for kernel $version." >&2
+exit 0

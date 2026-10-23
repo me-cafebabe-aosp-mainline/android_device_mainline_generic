@@ -45,7 +45,7 @@ Here is a table of the supported build targets:
 |--------|-------------|-------------|
 | `all_images` | `$ANDROID_PRODUCT_OUT/*.img` | Builds all images that this device tree provides. |
 | `bootmgr-configs` | `$ANDROID_PRODUCT_OUT/bootmgr-configs` | Builds every boot manager configurations which this device tree currently have template of. |
-| `debpackage` | `$ANDROID_PRODUCT_OUT/*.deb` | Debian package that installs Android next to a Debian-based Linux distribution. See [Debian package](deb-package.md). |
+| `debpackage` | `$ANDROID_PRODUCT_OUT/*.deb` | Debian package that installs Android next to a Debian-based Linux distribution. Without a kernel (`TARGET_NO_KERNEL=true`) it boots with the kernel of that distribution. See [Debian package](deb-package.md). |
 | `diskimage` | `$ANDROID_PRODUCT_OUT/*-disk.img` | Disk image to write to a whole disk: the layout of a whole disk installation by the installer. See `packages/apps/MainlineGenericSystemInstaller`. |
 | `liveisoimage` | `$ANDROID_PRODUCT_OUT/*-live.iso` | Live ISO image that can be written to CD-ROM-type media and boots a full Android environment without installation. It can also be written to a USB drive, as an image or as files (FAT32, exFAT or NTFS), or booted from Ventoy. Currently only supported for `Generic_x86_64`. |
 | `ramdisk_all_combined` | `$ANDROID_PRODUCT_OUT/ramdisk-all-combined.img` | The ramdisk image with all fragments concatenated. This is the ramdisk typically used for booting. |

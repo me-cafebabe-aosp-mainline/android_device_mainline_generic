@@ -1,0 +1,525 @@
+#!/usr/bin/python3
+#
+# SPDX-FileCopyrightText: The LineageOS Project
+# SPDX-License-Identifier: Apache-2.0
+#
+# Makes @BOOTMGR_ANDROID_DISTRIBUTION_NAME@ boot with the kernel of this
+# Debian installation. Installed by @DEB_PACKAGE@.
+#
+# Usage: update [--if-changed] [--update-initramfs] [KERNEL_VERSION [INITRD]]
+#
+# It uses the newest kernel, or the one of ANDROID_HOST_KERNEL_VERSION in
+# /etc/default/@DEB_PACKAGE@. With a KERNEL_VERSION, as the initramfs-tools
+# hook gives, it does nothing for the other kernels. With --if-changed it
+# does nothing when the files were made for that kernel already. With
+# --update-initramfs it makes the initramfs of the kernel first, as the
+# modules of this package have to be in it: update-initramfs then runs this
+# program again, as a hook.
+#
+# In @ANDROID_DIR@ it writes:
+#   kernel                   copy of /boot/vmlinuz-<version>
+#   ramdisk-all-combined.img the Debian initramfs followed by the Android
+#                            ramdisk, in the compression of the Debian one,
+#                            and a few generated files
+#   modules-overlay/         modules.load for the modules of Debian, laid
+#                            over them by an addon fstab in the ramdisk
+#
+
+import mmap
+import os
+import re
+import shutil
+import stat
+import subprocess
+import sys
+
+PACKAGE = '@DEB_PACKAGE@'
+ANDROID_DIR = '@ANDROID_DIR@'
+SHARE = '/usr/share/' + PACKAGE
+DEFAULTS = '/etc/default/' + PACKAGE
+BOOT = '/boot'
+MODULES = '/lib/modules'
+ANDROID_MOUNT = '/mnt/vendor/generic_init/android'
+ADDON_FSTAB_SUFFIX = 'debian_modules'
+STAMP = os.path.join(ANDROID_DIR, '.host-kernel')
+
+# name: (magic, compress, decompress)
+FORMATS = {
+    'zstd': (b'\x28\xb5\x2f\xfd', ['zstd', '-q', '-19', '-T0'], ['zstd', '-dcq']),
+    'xz': (b'\xfd7zXZ\x00', ['xz', '-c', '--check=crc32', '--lzma2=dict=32MiB'], ['xz', '-dc']),
+    'gzip': (b'\x1f\x8b', ['gzip', '-9n'], ['gzip', '-dc']),
+    'lz4': (b'\x02\x21\x4c\x18', ['lz4', '-l', '-12', '--favor-decSpeed'], ['lz4', '-dc']),
+    'bzip2': (b'BZh', ['bzip2', '-9'], ['bzip2', '-dc']),
+    'lzma': (b'\x5d\x00\x00', ['xz', '-c', '--format=lzma'], ['xz', '-dc', '--format=lzma']),
+    'lzop': (b'\x89LZO', ['lzop', '-9'], ['lzop', '-dc']),
+}
+# Directories that are symbolic links to usr/ in a usr-merged initramfs
+USRMERGED = ('bin', 'sbin', 'lib', 'lib64')
+MODULE_SUFFIXES = ('.gz', '.xz', '.zst')
+MODULE_FILE = re.compile(r'\.ko(\.gz|\.xz|\.zst)?$')
+
+
+def log(message):
+    print(PACKAGE + ': ' + message, file=sys.stderr)
+
+
+def die(message):
+    log('error: ' + message)
+    sys.exit(1)
+
+
+# Version selection
+
+def natural_key(version):
+    return [int(p) if p.isdigit() else p for p in re.split(r'(\d+)', version)]
+
+
+def configured_version():
+    if not os.path.exists(DEFAULTS):
+        return ''
+    out = subprocess.run(
+        ['sh', '-c', '. "$1" >/dev/null 2>&1; printf %s "$ANDROID_HOST_KERNEL_VERSION"', 'sh',
+         DEFAULTS], stdout=subprocess.PIPE, universal_newlines=True)
+    return out.stdout.strip()
+
+
+def usable(version):
+    return (os.path.exists('%s/vmlinuz-%s' % (BOOT, version)) and
+            os.path.exists('%s/initrd.img-%s' % (BOOT, version)) and
+            os.path.exists('%s/%s/modules.dep' % (MODULES, version)))
+
+
+def pick_version():
+    pinned = configured_version()
+    if pinned:
+        return pinned if usable(pinned) else None
+    versions = [f[len('vmlinuz-'):] for f in os.listdir(BOOT) if f.startswith('vmlinuz-')]
+    versions = sorted((v for v in versions if usable(v)), key=natural_key)
+    return versions[-1] if versions else None
+
+
+# Module names
+
+def canonical(name):
+    """ext4.ko.xz and ext4.ko are the same module, as for libmodprobe"""
+    name = os.path.basename(name)
+    for suffix in MODULE_SUFFIXES:
+        if name.endswith(suffix):
+            name = name[:-len(suffix)]
+    if name.endswith('.ko'):
+        name = name[:-3]
+    return name.replace('-', '_')
+
+
+def read_list(path):
+    names = []
+    try:
+        with open(path) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and line not in names:
+                    names.append(line)
+    except FileNotFoundError:
+        pass
+    return names
+
+
+def select_modules(wanted, prefixes, available):
+    """available: canonical name -> file name. Keeps the order of wanted"""
+    result = []
+    for name in wanted:
+        actual = available.get(canonical(name))
+        if actual and actual not in result:
+            result.append(actual)
+    for prefix in prefixes:
+        for canon in sorted(available):
+            if canon.startswith(prefix) and available[canon] not in result:
+                result.append(available[canon])
+    return result
+
+
+# cpio (newc)
+
+class Stream:
+    def __init__(self, f):
+        self.f = f
+        self.pos = 0
+        self.pending = b''
+
+    def read(self, n):
+        data = self.pending[:n]
+        self.pending = self.pending[n:]
+        while len(data) < n:
+            chunk = self.f.read(n - len(data))
+            if not chunk:
+                break
+            data += chunk
+        self.pos += len(data)
+        return data
+
+    def next_archive(self):
+        """Whether another archive follows the one just read. The initramfs may
+        have several in one compressed stream"""
+        self.pos = 0
+        while True:
+            byte = self.read(1)
+            if not byte:
+                return False
+            if byte != b'\0':
+                break
+        self.pending = byte + self.pending
+        self.pos = 0
+        return True
+
+    def skip(self, n):
+        while n > 0:
+            chunk = self.read(min(n, 1 << 20))
+            if not chunk:
+                raise EOFError('truncated cpio archive')
+            n -= len(chunk)
+
+    def copy(self, out, n):
+        while n > 0:
+            chunk = self.read(min(n, 1 << 20))
+            if not chunk:
+                raise EOFError('truncated cpio archive')
+            out.write(chunk)
+            n -= len(chunk)
+
+    def align(self):
+        self.skip(-self.pos % 4)
+
+
+FIELDS = ('ino', 'mode', 'uid', 'gid', 'nlink', 'mtime', 'filesize', 'devmajor', 'devminor',
+          'rdevmajor', 'rdevminor', 'namesize', 'check')
+
+
+def read_header(st):
+    """Returns (fields, name), or None at the trailer"""
+    header = st.read(110)
+    if len(header) != 110 or header[:6] != b'070701':
+        raise ValueError('not a newc cpio archive')
+    fields = {k: int(header[6 + 8 * i:14 + 8 * i], 16) for i, k in enumerate(FIELDS)}
+    name = st.read(fields['namesize'])[:-1].decode()
+    st.align()
+    if name == 'TRAILER!!!':
+        return None
+    return fields, name
+
+
+def read_entries(st):
+    """Entries of all the archives of the stream, without the trailers.
+    The caller reads or skips the data and aligns the stream"""
+    while True:
+        entry = read_header(st)
+        if entry:
+            yield entry
+        elif not st.next_archive():
+            return
+
+
+def pack_header(fields, name):
+    fields = dict(fields, namesize=len(name.encode()) + 1, check=0)
+    header = b'070701' + b''.join(b'%08X' % fields[k] for k in FIELDS)
+    data = header + name.encode() + b'\0'
+    return data + b'\0' * (-len(data) % 4)
+
+
+def pack_entry(name, mode, data=b'', ino=0):
+    fields = dict(ino=ino, mode=mode, uid=0, gid=0, nlink=1,
+                  mtime=0, filesize=len(data), devmajor=0, devminor=0, rdevmajor=0,
+                  rdevminor=0)
+    return pack_header(fields, name) + data + b'\0' * (-len(data) % 4)
+
+
+def pack_trailer():
+    return pack_entry('TRAILER!!!', 0)
+
+
+def skip_zeros(m, pos):
+    while pos < len(m) and m[pos] == 0:
+        pos += 1
+    return pos
+
+
+def skip_cpio(m, pos):
+    """End of the cpio archive that starts at pos"""
+    while True:
+        namesize = int(m[pos + 94:pos + 102], 16)
+        filesize = int(m[pos + 54:pos + 62], 16)
+        name = m[pos + 110:pos + 110 + namesize - 1]
+        pos = (pos + 110 + namesize + 3) & ~3
+        pos = (pos + filesize + 3) & ~3
+        if name == b'TRAILER!!!':
+            return pos
+
+
+def find_format(head):
+    for name, (magic, _, _) in FORMATS.items():
+        if head.startswith(magic):
+            return name
+    return None
+
+
+def open_decompressed(path, offset=0):
+    """Returns (file object, process or None) of the cpio data in a file"""
+    with open(path, 'rb') as f:
+        f.seek(offset)
+        head = f.read(8)
+    if head.startswith(b'070701'):
+        f = open(path, 'rb')
+        f.seek(offset)
+        return f, None
+    fmt = find_format(head)
+    if not fmt:
+        raise ValueError('%s: unknown format' % path)
+    f = open(path, 'rb')
+    f.seek(offset)
+    proc = subprocess.Popen(FORMATS[fmt][2], stdin=f, stdout=subprocess.PIPE)
+    f.close()
+    return proc.stdout, proc
+
+
+# The Debian initramfs
+
+def inspect_initrd(path):
+    """Returns (compression of the end of the initramfs or None, usr-merged,
+    canonical name -> file name of its modules)
+
+    initramfs-tools puts the files that are compressed already (the modules)
+    in an uncompressed archive, before the compressed one"""
+    segments = []
+    with open(path, 'rb') as f, mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as m:
+        pos = 0
+        while True:
+            pos = skip_zeros(m, pos)
+            if pos >= len(m):
+                break
+            if m[pos:pos + 6] == b'070701':
+                segments.append((pos, None))
+                pos = skip_cpio(m, pos)
+                continue
+            fmt = find_format(m[pos:pos + 8])
+            if not fmt:
+                die('%s: unknown compression' % path)
+            # It lasts to the end
+            segments.append((pos, fmt))
+            break
+    usrmerged = True
+    modules = {}
+    for offset, fmt in segments:
+        stream, proc = open_decompressed(path, offset)
+        st = Stream(stream)
+        # The uncompressed archive ends where the next starts
+        entries = read_entries(st) if fmt else iter(lambda: read_header(st), None)
+        for fields, name in entries:
+            if name in USRMERGED:
+                usrmerged = stat.S_ISLNK(fields['mode'])
+            if MODULE_FILE.search(name) and stat.S_ISREG(fields['mode']):
+                modules[canonical(name)] = os.path.basename(name)
+            st.skip(fields['filesize'])
+            st.align()
+        stream.close()
+        if proc:
+            proc.kill()
+            proc.wait()
+    last_fmt = segments[-1][1] if segments else None
+    return last_fmt, usrmerged, modules
+
+
+# Android ramdisk
+
+def remap(name, usrmerged):
+    first = name.split('/', 1)[0]
+    if usrmerged and first in USRMERGED:
+        # The symbolic link of the Debian initramfs stays
+        return None if name == first else 'usr/' + name
+    return name
+
+
+def copy_android_ramdisk(out, pieces, usrmerged):
+    for piece in pieces:
+        stream, proc = open_decompressed(piece)
+        st = Stream(stream)
+        for fields, name in read_entries(st):
+            new_name = remap(name, usrmerged)
+            if new_name is None:
+                st.skip(fields['filesize'])
+            else:
+                out.write(pack_header(fields, new_name))
+                st.copy(out, fields['filesize'])
+                out.write(b'\0' * (-fields['filesize'] % 4))
+            st.align()
+        stream.close()
+        if proc:
+            proc.kill()
+            proc.wait()
+
+
+# GRUB path of a directory, relative to the root of its filesystem
+
+def path_in_filesystem(path):
+    path = os.path.realpath(path)
+    script = '. /usr/share/grub/grub-mkconfig_lib && make_system_path_relative_to_its_root "$1"'
+    res = subprocess.run(['sh', '-c', script, 'sh', path], stdout=subprocess.PIPE,
+                         stderr=subprocess.DEVNULL, universal_newlines=True)
+    if res.returncode == 0 and res.stdout.strip():
+        return res.stdout.strip()
+    res = subprocess.run(['findmnt', '-n', '-o', 'TARGET', '-T', path], stdout=subprocess.PIPE,
+                         universal_newlines=True)
+    mount = res.stdout.strip() or '/'
+    rel = os.path.relpath(path, mount)
+    return '/' + ('' if rel == '.' else rel)
+
+
+def same_filesystem(a, b):
+    return os.stat(a).st_dev == os.stat(b).st_dev
+
+
+def write_text(path, lines):
+    with open(path, 'w') as f:
+        f.write(''.join(line + '\n' for line in lines))
+
+
+def main():
+    try:
+        return update()
+    except BaseException:
+        for name in ('modules-overlay.new', 'ramdisk-all-combined.img.new', 'kernel.new'):
+            path = os.path.join(ANDROID_DIR, name)
+            if os.path.isdir(path):
+                shutil.rmtree(path, ignore_errors=True)
+            elif os.path.exists(path):
+                os.unlink(path)
+        raise
+
+
+def update():
+    args = sys.argv[1:]
+    if_changed = '--if-changed' in args
+    rebuild_initramfs = '--update-initramfs' in args
+    args = [a for a in args if not a.startswith('--')]
+    requested = args[0] if args else None
+
+    if not os.path.isdir(ANDROID_DIR):
+        die('%s does not exist' % ANDROID_DIR)
+    version = pick_version()
+    if not version:
+        log('no usable kernel in %s with modules in %s, Android has no kernel to boot with' %
+            (BOOT, MODULES))
+        return 0
+    if requested and requested != version:
+        return 0
+    if if_changed:
+        try:
+            with open(STAMP) as f:
+                if f.read().strip() == version:
+                    return 0
+        except FileNotFoundError:
+            pass
+
+    if rebuild_initramfs:
+        log('making the initramfs of kernel %s' % version)
+        if subprocess.run(['update-initramfs', '-u', '-k', version]).returncode == 0:
+            # Its hook has run this program
+            return 0
+        log('warning: update-initramfs failed')
+
+    pieces = sorted(os.path.join(ANDROID_DIR, 'ramdisk', f)
+                    for f in os.listdir(os.path.join(ANDROID_DIR, 'ramdisk')))
+    if not pieces:
+        die('no ramdisk in %s/ramdisk' % ANDROID_DIR)
+    vmlinuz = '%s/vmlinuz-%s' % (BOOT, version)
+    initrd = '%s/initrd.img-%s' % (BOOT, version)
+    log('using kernel %s' % version)
+
+    fmt, usrmerged, initrd_modules = inspect_initrd(initrd)
+    log('initramfs compression: %s' % (fmt or 'none'))
+
+    # Modules of the kernel of this installation
+    available = {}
+    with open('%s/%s/modules.dep' % (MODULES, version)) as f:
+        for line in f:
+            name = line.split(':', 1)[0]
+            available[canonical(name)] = os.path.basename(name)
+
+    # Stage 1: the modules of the initramfs, which the hook adds to
+    ramdisk_list = select_modules(read_list(SHARE + '/modules.load.ramdisk'),
+                                  read_list(SHARE + '/modules.load_prefix.ramdisk'),
+                                  initrd_modules)
+    # Stage 2: the modules of the kernel, from /vendor/lib/modules
+    vendor_list = select_modules(read_list(SHARE + '/modules.load'), [], available)
+    log('%d modules for the ramdisk, %d for the vendor partition' %
+        (len(ramdisk_list), len(vendor_list)))
+
+    # The files for the modules of Debian, laid over /vendor_dlkm/lib/modules
+    overlay_new = os.path.join(ANDROID_DIR, 'modules-overlay.new')
+    shutil.rmtree(overlay_new, ignore_errors=True)
+    os.makedirs(os.path.join(overlay_new, version))
+    write_text(os.path.join(overlay_new, version, 'modules.load'), vendor_list)
+    shutil.copyfile(SHARE + '/modules.options', os.path.join(overlay_new, version, 'modules.options'))
+    for path in (overlay_new, os.path.join(overlay_new, version)):
+        os.chmod(path, 0o755)
+
+    modules_dir = os.path.realpath(MODULES)
+    fstab = []
+    if same_filesystem(ANDROID_DIR, modules_dir):
+        overlay_path = ANDROID_MOUNT + path_in_filesystem(os.path.join(ANDROID_DIR, 'modules-overlay'))
+        modules_path = ANDROID_MOUNT + path_in_filesystem(modules_dir)
+        fstab.append('overlay /vendor_dlkm/lib/modules overlay ro,lowerdir=%s:%s:'
+                     '/vendor_dlkm/lib/modules nofail' % (overlay_path, modules_path))
+    else:
+        log('warning: %s is not on the filesystem of %s, the modules of the kernel are not '
+            'available to Android after the ramdisk' % (modules_dir, ANDROID_DIR))
+
+    lib = ('usr/' if usrmerged else '') + 'lib'
+    generated = b''.join([
+        pack_entry(d, stat.S_IFDIR | 0o755)
+        for d in ('system', 'system/etc', lib, lib + '/modules', '%s/modules/%s' % (lib, version))
+    ])
+    for name, content in (
+            ('%s/modules/%s/modules.load' % (lib, version), '\n'.join(ramdisk_list) + '\n'),
+            ('%s/modules/%s/modules.options' % (lib, version),
+             open(SHARE + '/modules.options').read()),
+            ('system/etc/fstab.generic_init.addon.' + ADDON_FSTAB_SUFFIX,
+             '\n'.join(fstab) + '\n' if fstab else '')):
+        generated += pack_entry(name, stat.S_IFREG | 0o644, content.encode())
+
+    # The ramdisk: the Debian initramfs as it is, then ours in its compression
+    ramdisk_new = os.path.join(ANDROID_DIR, 'ramdisk-all-combined.img.new')
+    with open(ramdisk_new, 'wb') as out:
+        with open(initrd, 'rb') as f:
+            shutil.copyfileobj(f, out, 1 << 20)
+        out.write(b'\0' * (-out.tell() % 4))
+        out.flush()
+        proc = None
+        target = out
+        if fmt:
+            proc = subprocess.Popen(FORMATS[fmt][1], stdin=subprocess.PIPE, stdout=out)
+            target = proc.stdin
+        try:
+            copy_android_ramdisk(target, pieces, usrmerged)
+            target.write(generated)
+            target.write(pack_trailer())
+        finally:
+            if proc:
+                proc.stdin.close()
+                if proc.wait() != 0:
+                    die('compressing the ramdisk failed')
+
+    kernel_new = os.path.join(ANDROID_DIR, 'kernel.new')
+    shutil.copyfile(vmlinuz, kernel_new)
+
+    for path in (ramdisk_new, kernel_new):
+        os.chmod(path, 0o644)
+    os.rename(kernel_new, os.path.join(ANDROID_DIR, 'kernel'))
+    overlay = os.path.join(ANDROID_DIR, 'modules-overlay')
+    shutil.rmtree(overlay, ignore_errors=True)
+    os.rename(overlay_new, overlay)
+    os.rename(ramdisk_new, os.path.join(ANDROID_DIR, 'ramdisk-all-combined.img'))
+    write_text(STAMP, [version])
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

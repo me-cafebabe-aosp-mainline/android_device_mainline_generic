@@ -5,8 +5,8 @@ Maintainer: @DEB_MAINTAINER@
 Installed-Size: @DEB_INSTALLED_SIZE@
 Section: misc
 Priority: optional
-Depends: e2fsprogs
-Recommends: grub2-common, firmware-linux-free
+Depends: e2fsprogs@DEB_EXTRA_DEPENDS@
+Recommends: grub2-common, firmware-linux-free@DEB_EXTRA_RECOMMENDS@
 Suggests: firmware-linux-nonfree
 Description: @BOOTMGR_ANDROID_DISTRIBUTION_NAME@ for @TARGET_DEVICE@
  Installs the Android system next to this Linux distribution, on the

@@ -16,5 +16,9 @@
 # Add the serial console to the kernel command line.
 #ANDROID_SERIAL_CONSOLE=true
 
+@HOST_KERNEL@# The Debian kernel to boot Android with (a version of /boot/vmlinuz-*), if not
+@HOST_KERNEL@# the newest.
+@HOST_KERNEL@#ANDROID_HOST_KERNEL_VERSION=
+@HOST_KERNEL@
 # Extra kernel command line, for example androidboot.* boot parameters.
 #ANDROID_CMDLINE_EXTRA=""

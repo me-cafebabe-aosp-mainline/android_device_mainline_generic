@@ -8,13 +8,22 @@ set -e
 
 android_dir=@ANDROID_DIR@
 
+# Made for the kernel of this installation, the package does not own them
+remove_host_kernel_files() {
+    rm -rf "$android_dir/kernel" "$android_dir/ramdisk-all-combined.img" \
+        "$android_dir/modules-overlay" "$android_dir/.host-kernel" \
+        "$android_dir"/*.new
+}
+
 case "$1" in
 remove)
+    remove_host_kernel_files
     if command -v update-grub >/dev/null 2>&1 && [ -e /boot/grub/grub.cfg ]; then
         update-grub || echo "Warning: update-grub failed, run it again by hand." >&2
     fi
     ;;
 purge)
+    remove_host_kernel_files
     rm -rf "$android_dir/userdata" "$android_dir/metadata" \
         "$android_dir/userdata.img" "$android_dir/metadata.img"
     rmdir "$android_dir" 2>/dev/null || true

@@ -1,0 +1,12 @@
+#!/bin/sh
+#
+# SPDX-FileCopyrightText: The LineageOS Project
+# SPDX-License-Identifier: Apache-2.0
+#
+# /etc/kernel/postrm.d hook of @DEB_PACKAGE@: after a kernel is removed, the
+# newest remaining one may be another, so update the Android boot files.
+#
+
+/usr/share/@DEB_PACKAGE@/update --if-changed ||
+    echo "@DEB_PACKAGE@: could not update @ANDROID_DIR@." >&2
+exit 0

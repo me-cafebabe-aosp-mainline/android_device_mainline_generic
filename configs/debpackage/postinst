@@ -61,6 +61,14 @@ create_userdata() {
     esac
 }
 
+# Android boots with the kernel of this installation: make the kernel and the
+# ramdisk of it
+update_host_kernel_files() {
+    [ -x /usr/share/@DEB_PACKAGE@/update ] || return 0
+    /usr/share/@DEB_PACKAGE@/update --update-initramfs ||
+        echo "Warning: could not make the kernel and ramdisk of Android, run /usr/share/@DEB_PACKAGE@/update by hand." >&2
+}
+
 update_grub() {
     if command -v update-grub >/dev/null 2>&1 && [ -e /boot/grub/grub.cfg ]; then
         update-grub || echo "Warning: update-grub failed, run it again by hand." >&2
@@ -71,6 +79,7 @@ case "$1" in
 configure)
     check_filesystem
     create_userdata
+    update_host_kernel_files
     update_grub
     ;;
 esac

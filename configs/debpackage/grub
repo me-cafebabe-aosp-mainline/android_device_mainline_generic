@@ -51,6 +51,18 @@ cmdline="@STRIPPED_BOARD_KERNEL_CMDLINE@ androidboot.android_dir=${rel_dir#/} an
 # directory name
 uuid=$("$grub_probe" --target=fs_uuid "$android_dir" 2>/dev/null) || uuid=
 [ -n "$uuid" ] && cmdline="$cmdline androidboot.android_dir_dev=UUID=$uuid"
+# The kernel of this installation: its LSM order puts AppArmor before SELinux,
+# and only one of them is enabled. Android needs SELinux. Its modules are the
+# ones of the Debian partition.
+if [ "@DEB_HOST_KERNEL@" = true ]; then
+    cmdline="$cmdline security=selinux"
+    case "$cmdline" in
+    *androidboot.addon_fstab_suffix=*)
+        cmdline=$(echo "$cmdline" | sed 's/androidboot\.addon_fstab_suffix=[^ ]*/&,debian_modules/') ;;
+    *)
+        cmdline="$cmdline androidboot.addon_fstab_suffix=debian_modules" ;;
+    esac
+fi
 if [ "$ANDROID_SERIAL_CONSOLE" = true ]; then
     cmdline="$cmdline @STRIPPED_BOARD_KERNEL_CMDLINE_SERIAL_CONSOLE@"
 fi
