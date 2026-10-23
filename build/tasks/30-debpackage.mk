@@ -36,8 +36,8 @@ INSTALLED_DEBPACKAGE_TARGET_INCLUDE_FILES := \
 ifeq ($(TARGET_NO_KERNEL),true)
 DEBPACKAGE_HOST_KERNEL := true
 DEBPACKAGE_RAMDISK_PIECE_FILES := $(INSTALLED_RAMDISK_ALL_COMBINED_TARGET_DEPS)
-DEBPACKAGE_EXTRA_DEPENDS := , python3, initramfs-tools, kmod, cpio, lz4, xz-utils, zstd
-DEBPACKAGE_EXTRA_RECOMMENDS := , linux-image-$(DEBPACKAGE_ARCH)
+DEBPACKAGE_EXTRA_DEPENDS := , python3, initramfs-tools, kmod, cpio, lz4, xz-utils, zstd, dkms
+DEBPACKAGE_EXTRA_RECOMMENDS := , linux-image-$(DEBPACKAGE_ARCH), linux-headers-$(DEBPACKAGE_ARCH)
 INSTALLED_DEBPACKAGE_TARGET_INCLUDE_FILES += $(DEBPACKAGE_RAMDISK_PIECE_FILES)
 else
 DEBPACKAGE_HOST_KERNEL := false
@@ -47,7 +47,7 @@ INSTALLED_DEBPACKAGE_TARGET_INCLUDE_FILES += \
 endif
 
 DEBPACKAGE_SRC_DIR := $(DEVICE_PATH)/configs/debpackage
-DEBPACKAGE_SCRIPTS := preinst postinst postrm
+DEBPACKAGE_SCRIPTS := preinst postinst prerm postrm
 DEBPACKAGE_TEMPLATES := \
     $(addprefix $(DEBPACKAGE_SRC_DIR)/,control conffiles default grub $(DEBPACKAGE_SCRIPTS))
 
@@ -59,7 +59,11 @@ DEBPACKAGE_MODULES_LOAD_SRCS := \
     kernel/mainline/configs/modprobe/modules.load \
     $(DEVICE_PATH)/configs/modprobe/modules.load \
     $(DEVICE_PATH)/configs/modprobe/modules.load.debian
+# ashmem, which Debian kernels do not have, as DKMS source; dkms.conf has its version
+DEBPACKAGE_ASHMEM_DKMS_DIR := $(DEVICE_PATH)/dkms/ashmem-linux
+DEBPACKAGE_ASHMEM_DKMS_VERSION := 1.0
 DEBPACKAGE_HOST_KERNEL_FILES := \
+    $(shell find $(DEBPACKAGE_ASHMEM_DKMS_DIR) -type f) \
     $(DEBPACKAGE_MODULES_LOAD_SRCS) \
     $(addprefix $(DEVICE_PATH)/configs/modprobe/,\
         modules.load.ramdisk modules.load_prefix.ramdisk modules.options) \
@@ -106,6 +110,8 @@ define make-debpackage-host-kernel-files
 		modules.load.ramdisk modules.load_prefix.ramdisk modules.options) $(DEBPACKAGE_SHARE_DIR)/
 	cp $(addprefix $(DEBPACKAGE_SRC_DIR)/,update post-update kernel-postrm) $(DEBPACKAGE_SHARE_DIR)/
 	cp $(DEBPACKAGE_SRC_DIR)/initramfs-hook $(DEBPACKAGE_INITRAMFS_HOOK)
+	mkdir -p $(DEBPACKAGE_ROOT)/usr/src/ashmem-linux-$(DEBPACKAGE_ASHMEM_DKMS_VERSION)
+	cp -r $(DEBPACKAGE_ASHMEM_DKMS_DIR)/. $(DEBPACKAGE_ROOT)/usr/src/ashmem-linux-$(DEBPACKAGE_ASHMEM_DKMS_VERSION)/
 	ln -s /usr/share/$(DEBPACKAGE_NAME)/post-update \
 		$(DEBPACKAGE_ROOT)/etc/initramfs/post-update.d/$(DEBPACKAGE_NAME)
 	ln -s /usr/share/$(DEBPACKAGE_NAME)/kernel-postrm \

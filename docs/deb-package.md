@@ -114,6 +114,15 @@ before `/system/bin/init` starts:
    hardware load all the others, and `modprobe_kernel` the ones asked
    by name.
 
+Debian kernels have no ashmem, and Android needs it (memfd alone is not
+enough). The package has `ashmem_linux`, a port of
+`drivers/staging/android/ashmem.c`, as DKMS source in
+`/usr/src/ashmem-linux-1.0` (`dkms/ashmem-linux`). DKMS builds it
+for each kernel that is installed (which needs `linux-headers-<version>`,
+that the package recommends), and `update` builds it for the kernel it
+uses if it is not there. `modules.load.debian` loads it before
+`/system/bin/init`. It works on Linux 6.12 and 7.1.
+
 The firmware is the one of the Debian system (`/usr/lib/firmware`), whose
 compressed files `generic_init` can use.
 
