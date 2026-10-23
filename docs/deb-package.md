@@ -123,6 +123,12 @@ that the package recommends), and `update` builds it for the kernel it
 uses if it is not there. `modules.load.debian` loads it before
 `/system/bin/init`. It works on Linux 6.12 and 7.1.
 
+Android also reads `/proc/config.gz` (VINTF), which Debian kernels do not
+have: `system_server` aborts with "Kernel configs could not be fetched"
+without it. `configs` (`dkms/configs-linux`, built from `kernel/configs.c`
+of Linux) makes it, with the `.config` of the kernel headers, which the
+`linux-headers` package of Debian has. It is in `modules.load` already.
+
 The firmware is the one of the Debian system (`/usr/lib/firmware`), whose
 compressed files `generic_init` can use.
 

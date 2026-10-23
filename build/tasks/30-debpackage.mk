@@ -59,11 +59,12 @@ DEBPACKAGE_MODULES_LOAD_SRCS := \
     kernel/mainline/configs/modprobe/modules.load \
     $(DEVICE_PATH)/configs/modprobe/modules.load \
     $(DEVICE_PATH)/configs/modprobe/modules.load.debian
-# ashmem, which Debian kernels do not have, as DKMS source; dkms.conf has its version
-DEBPACKAGE_ASHMEM_DKMS_DIR := $(DEVICE_PATH)/dkms/ashmem-linux
-DEBPACKAGE_ASHMEM_DKMS_VERSION := 1.0
+# What Debian kernels do not have but Android needs, as DKMS source:
+# ashmem and /proc/config.gz. Their version is in dkms.conf.
+DEBPACKAGE_DKMS_MODULES := ashmem-linux configs-linux
+DEBPACKAGE_DKMS_VERSION := 1.0
 DEBPACKAGE_HOST_KERNEL_FILES := \
-    $(shell find $(DEBPACKAGE_ASHMEM_DKMS_DIR) -type f) \
+    $(shell find $(addprefix $(DEVICE_PATH)/dkms/,$(DEBPACKAGE_DKMS_MODULES)) -type f) \
     $(DEBPACKAGE_MODULES_LOAD_SRCS) \
     $(addprefix $(DEVICE_PATH)/configs/modprobe/,\
         modules.load.ramdisk modules.load_prefix.ramdisk modules.options) \
@@ -110,8 +111,9 @@ define make-debpackage-host-kernel-files
 		modules.load.ramdisk modules.load_prefix.ramdisk modules.options) $(DEBPACKAGE_SHARE_DIR)/
 	cp $(addprefix $(DEBPACKAGE_SRC_DIR)/,update post-update kernel-postrm) $(DEBPACKAGE_SHARE_DIR)/
 	cp $(DEBPACKAGE_SRC_DIR)/initramfs-hook $(DEBPACKAGE_INITRAMFS_HOOK)
-	mkdir -p $(DEBPACKAGE_ROOT)/usr/src/ashmem-linux-$(DEBPACKAGE_ASHMEM_DKMS_VERSION)
-	cp -r $(DEBPACKAGE_ASHMEM_DKMS_DIR)/. $(DEBPACKAGE_ROOT)/usr/src/ashmem-linux-$(DEBPACKAGE_ASHMEM_DKMS_VERSION)/
+	$(foreach module,$(DEBPACKAGE_DKMS_MODULES),\
+		mkdir -p $(DEBPACKAGE_ROOT)/usr/src/$(module)-$(DEBPACKAGE_DKMS_VERSION); \
+		cp -r $(DEVICE_PATH)/dkms/$(module)/. $(DEBPACKAGE_ROOT)/usr/src/$(module)-$(DEBPACKAGE_DKMS_VERSION)/;)
 	ln -s /usr/share/$(DEBPACKAGE_NAME)/post-update \
 		$(DEBPACKAGE_ROOT)/etc/initramfs/post-update.d/$(DEBPACKAGE_NAME)
 	ln -s /usr/share/$(DEBPACKAGE_NAME)/kernel-postrm \

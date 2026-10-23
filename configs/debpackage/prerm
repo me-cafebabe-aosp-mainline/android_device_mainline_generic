@@ -8,10 +8,12 @@ set -e
 
 case "$1" in
 remove|deconfigure)
-    # The ashmem module of the package, built with DKMS (builds without a kernel)
-    if [ -d /usr/src/ashmem-linux-1.0 ] && command -v dkms >/dev/null 2>&1; then
-        dkms remove -m ashmem-linux -v 1.0 --all >/dev/null 2>&1 || true
-    fi
+    # The modules of the package, built with DKMS (builds without a kernel)
+    for module in ashmem-linux configs-linux; do
+        if [ -d /usr/src/$module-1.0 ] && command -v dkms >/dev/null 2>&1; then
+            dkms remove -m $module -v 1.0 --all >/dev/null 2>&1 || true
+        fi
+    done
     ;;
 esac
 
