@@ -55,7 +55,7 @@ uuid=$("$grub_probe" --target=fs_uuid "$android_dir" 2>/dev/null) || uuid=
 # and only one of them is enabled. Android needs SELinux. Its modules are the
 # ones of the Debian partition.
 if [ "@DEB_HOST_KERNEL@" = true ]; then
-    cmdline="$cmdline security=selinux"
+    cmdline="$cmdline androidboot.use_memfd=false security=selinux"
     case "$cmdline" in
     *androidboot.addon_fstab_suffix=*)
         cmdline=$(echo "$cmdline" | sed 's/androidboot\.addon_fstab_suffix=[^ ]*/&,debian_modules/') ;;
