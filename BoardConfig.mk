@@ -62,16 +62,20 @@ BOARD_MESA3D_VULKAN_DRIVERS += \
 $(call soong_config_set_bool,minigbm_upstream,disable_virgl_native_yuv,true)
 
 # Kernel
+ifneq ($(TARGET_NO_KERNEL),true)
 MAINLINE_GENERIC_KERNEL_USE ?= debian
 MAINLINE_GENERIC_KERNEL_BOARDCONFIG_MK ?= $(TARGET_DEVICE_PATH)/kernels/$(MAINLINE_GENERIC_KERNEL_USE)/board.mk
 include $(MAINLINE_GENERIC_KERNEL_BOARDCONFIG_MK)
+endif
 
 # Kernel modules
+ifneq ($(TARGET_NO_KERNEL),true)
 BOARD_KERNEL_MODULES_LOAD_ALLOW_MISSING := true
 BOARD_VENDOR_KERNEL_MODULES_LOAD := $(shell cat $(DEVICE_PATH)/configs/modprobe/modules.load)
 BOARD_VENDOR_RAMDISK_KERNEL_MODULES_LOAD := $(shell cat $(DEVICE_PATH)/configs/modprobe/modules.load.ramdisk)
 BOOT_KERNEL_MODULES_FINDER := $(DEVICE_PATH)/configs/kernel/boot_kernel_modules_finder.sh
 TARGET_AUTO_COLLECT_KERNEL_MODULE_DEPS := true
+endif
 
 # OTA
 TARGET_SKIP_OTA_PACKAGE := true

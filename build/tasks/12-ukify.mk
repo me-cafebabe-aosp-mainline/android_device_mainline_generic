@@ -4,6 +4,7 @@
 #
 
 ifeq ($(USES_DEVICE_MAINLINE_GENERIC),true)
+ifneq ($(TARGET_NO_KERNEL),true)
 
 CMDLINE_EXTRA_TXT := $(PRODUCT_OUT)/cmdline-extra.txt
 
@@ -38,4 +39,6 @@ ukify_build: $(UKIFY_OUT)
 ukify_build-nodeps:
 	$(call make-ukify-out,$(UKIFY_OUT))
 
+
+endif # TARGET_NO_KERNEL
 endif # USES_DEVICE_MAINLINE_GENERIC

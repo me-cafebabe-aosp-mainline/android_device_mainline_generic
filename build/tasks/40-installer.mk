@@ -4,5 +4,7 @@
 #
 
 ifeq ($(USES_DEVICE_MAINLINE_GENERIC),true)
+ifneq ($(TARGET_NO_KERNEL),true)
 include packages/apps/MainlineGenericSystemInstaller/build/tasks.mk
+endif
 endif

@@ -4,6 +4,7 @@
 #
 
 ifeq ($(USES_DEVICE_MAINLINE_GENERIC),true)
+ifneq ($(TARGET_NO_KERNEL),true)
 
 DEBPACKAGE_ARCH_arm64 := arm64
 DEBPACKAGE_ARCH_x86_64 := amd64
@@ -93,4 +94,5 @@ debpackage-nodeps:
 
 endif # DEBPACKAGE_ARCH
 
+endif # TARGET_NO_KERNEL
 endif # USES_DEVICE_MAINLINE_GENERIC
