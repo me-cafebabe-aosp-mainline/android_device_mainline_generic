@@ -131,6 +131,12 @@ Requirements of this mode:
   `modules.options` gives it the devices `binder,hwbinder,vndbinder`
   (`CONFIG_ANDROID_BINDER_DEVICES` is only `binder`, and Debian has no
   binderfs).
+  The Debian kernel also lacks the cgroup v1 `cpuset` controller
+  (`CONFIG_CPUSETS_V1`) and the v1 memory controller (`CONFIG_MEMCG_V1`,
+  Android uses v2 for it). A build without a kernel therefore installs
+  `/vendor/etc/cgroups.json` (`configs/cgroups/cgroups.json`), which makes
+  `cpuset` optional: without it init stops setting up cgroups and no
+  service starts. The cpuset task profiles are skipped then.
 - The installation has `python3`, `initramfs-tools`, `kmod` and the
   compression tools; the package depends on them.
 

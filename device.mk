@@ -171,6 +171,13 @@ PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/configs/modprobe/modules.options:$(TARGET_COPY_OUT_RAMDISK)/lib/modules/modules.options \
     $(DEVICE_PATH)/configs/modprobe/modules.options:$(TARGET_COPY_OUT_VENDOR_DLKM)/lib/modules/modules.options
 
+# Cgroups
+# The Debian kernel has no cpuset cgroup v1
+ifeq ($(TARGET_NO_KERNEL),true)
+PRODUCT_COPY_FILES += \
+    $(DEVICE_PATH)/configs/cgroups/cgroups.json:$(TARGET_COPY_OUT_VENDOR)/etc/cgroups.json
+endif
+
 PRODUCT_PACKAGES += \
     modprobe_kernel
 
