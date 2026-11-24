@@ -5,6 +5,8 @@
 
 # External
 /devices/*/block/mmcblk* auto auto defaults voldmanaged=mmc:auto
+/devices/*/block/nvme* auto auto defaults voldmanaged=nvme:auto
+/devices/*/block/sd* auto auto defaults voldmanaged=hdd:auto
 /devices/*/block/sr* auto auto defaults voldmanaged=cdrom:auto
 /devices/*/usb* auto auto defaults voldmanaged=usb:auto
 
